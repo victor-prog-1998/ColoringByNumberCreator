@@ -1,0 +1,27 @@
+<RCC>
+    <qresource prefix="/">
+        <file>QML/main.qml</file>
+        <file>QML/SidePanel.qml</file>
+        <file>icons/Arrow-Back.png</file>
+        <file>icons/Arrow-Forward.png</file>
+        <file>QML/ImageButton.qml</file>
+        <file>QML/PageHeader.qml</file>
+        <file>QML/CustomButton.qml</file>
+        <file>QML/ImageArea.qml</file>
+        <file>QML/ColorBar.qml</file>
+        <file>icons/delete-icon.png</file>
+        <file>icons/Next-icon.png</file>
+        <file>icons/Prev-icon.png</file>
+        <file>QML/CustomSpinBox.qml</file>
+        <file>QML/ColorCountPopup.qml</file>
+        <file>QML/PaletteSidePanel.qml</file>
+        <file>icons/folder-icon.png</file>
+        <file>icons/palette-icon.png</file>
+        <file>icons/cancel-change-color-icon.png</file>
+        <file>icons/change-color-icon.png</file>
+        <file>icons/close-icon.png</file>
+        <file>icons/fill-icon.png</file>
+        <file>icons/pencil-icon.png</file>
+        <file>QML/ColorSidePanel.qml</file>
+    </qresource>
+</RCC>
