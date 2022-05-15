@@ -27,8 +27,9 @@ Flickable{
             anchors.fill: parent
             onWheel: {
                 var k = 1.1;
-                var scaleFactor = wheel.angleDelta.y > 0 ? k : 1 / k;
-                root.zoom *= scaleFactor;
+                var deltaScale = wheel.angleDelta.y > 0 ? k : 1 / k;
+                var newScale = root.zoom * deltaScale;
+                if(newScale > 0.1) root.zoom = newScale;
             }
             onClicked: {
                 root.clicked(Math.floor(mouseX), Math.floor(mouseY))

@@ -16,10 +16,6 @@ Rectangle{
     property alias header: header
     signal closed()
 
-//    onVisibleChanged: {
-//        width = visible ? minimumWidth : 0;
-//    }
-
     function close()
     {
         root.closed();
@@ -58,12 +54,8 @@ Rectangle{
         }
     }
 
-
-
-
     Rectangle{
         id: resizeRect
-        //anchors.right: parent.right
         x: parent.width - width
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -85,5 +77,4 @@ Rectangle{
             cursorShape: Qt.SplitHCursor
         }
     }
-
 }

@@ -27,5 +27,4 @@ Rectangle{
         onExited: root.color = root.buttonColor
         onClicked: root.clicked();
     }
-
 }

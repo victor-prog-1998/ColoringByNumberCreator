@@ -50,10 +50,7 @@ SidePanel{
                     }
                 }
             }
-
-
         }
-
 
         Column{
             id: buttonsColumn
@@ -102,9 +99,6 @@ SidePanel{
             }
         }
     }
-
-
-
 
     ColorDialog{
         id: colorDialog

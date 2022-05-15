@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QImage>
 #include "imageprovider.h"
+#include "imagecreator.h"
 
 class ImageProcessor : public QObject
 {
@@ -19,27 +20,19 @@ public:
     Q_INVOKABLE void setPixelColor(int x, int y, const QColor& color);
     Q_INVOKABLE void fill(int x, int y, const QColor& fillColor);
     Q_INVOKABLE void edges();
-    Q_INVOKABLE void removeImageFromProvider(const QString& id);
+    Q_INVOKABLE void coloring();
+    Q_INVOKABLE void removeEdgesFromProvider();
+    Q_INVOKABLE void removeColoringFromProvider();
+    Q_INVOKABLE void saveResults(const QString& folderPath, int tileRows = 0, int tileColumns = 0);
 private:
     QImage m_currentImage;
     ImageProvider *m_imageProvider;
+    ImageCreator m_imageCreator;
     QList<QColor> m_colors;
-    void _posterize(const QImage& sourceImage, QImage& result);
-    void _medianFilter(const QImage& sourceImage, QImage& result, int maskSize = 3, int iterations = 1);
-    void _averagingFilter(const QImage& sourceImage, QImage& result, int maskSize = 3, int iterations = 1);
-    QRect _fill(int x, int y, QImage& image, const QColor& fillColor);
-    int _findNearestColorIndex(const QColor& color);
-    double _colorDistanceLab(const QColor& color, int index);
-    double _colorDistance(const QColor& color, int index);
-    void _rgb2xyz(const QColor& rgbColor, double &x, double& y, double& z);
-    void _xyz2Lab(double x, double y, double z, double& l, double& a, double& b);
-    void _rgb2Lab(const QColor& rgbColor, double &l, double &a, double &b);
-    double _f(double t);
-    QList<QColor> _getUniqueColors();
+    QString _generateSaveFolderName();
 
-    QPair<QList<QColor>,QList<QColor>> _splitPixels(const QList<QColor>& pixels);
-    QList<QColor> _getImagePixels();
-    QColor _averageColor(const QList<QColor>& colors);
+
+
 
 signals:
 

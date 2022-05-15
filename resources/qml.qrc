@@ -23,5 +23,6 @@
         <file>icons/fill-icon.png</file>
         <file>icons/pencil-icon.png</file>
         <file>QML/ColorSidePanel.qml</file>
+        <file>icons/save-icon.png</file>
     </qresource>
 </RCC>
