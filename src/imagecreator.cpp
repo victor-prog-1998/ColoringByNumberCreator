@@ -2,19 +2,15 @@
 #include <QPainter>
 #include <QDebug>
 #include <math.h>
-#include <QFontMetrics>
 
 ImageCreator::ImageCreator()
 {
     _makeDigits();
 }
 
-void ImageCreator::createImages(const QImage &posterized, const QList<Area>& areas, const QMap<QString, int> &colorsMap)
+void ImageCreator::createSimplifiedImages(const QImage &posterized, const QList<Area>& areas, const QMap<QString, int> &colorsMap)
 {
     _createLegend(colorsMap);
-    QFont font("Courier");
-    font.setPixelSize(1);
-    QFontMetrics fontMetrics(font);
     m_coloringImage = QImage(posterized.size(), QImage::Format_RGB888);
     m_coloringImage.fill(Qt::white);
     QPainter painter(&m_coloringImage);
@@ -23,7 +19,6 @@ void ImageCreator::createImages(const QImage &posterized, const QList<Area>& are
     m_paintedImage = m_coloringImage;
 
     painter.setPen(Qt::black);
-    painter.setFont(font);
 
     // Первый проход (подготовка)
     for(const auto& area: areas)
@@ -61,6 +56,49 @@ void ImageCreator::createImages(const QImage &posterized, const QList<Area>& are
           {
               _drawNumber(textPos.x(), textPos.y(), colorId, painter);
           }
+        }
+      }
+}
+
+void ImageCreator::createImages(const QImage &posterized, const QList<Area> &areas, const QMap<QString, int> &colorsMap)
+{
+    _createLegend(colorsMap);
+    m_coloringImage = QImage(posterized.size(), QImage::Format_RGB888);
+    m_coloringImage.fill(Qt::white);
+    QPainter painter(&m_coloringImage);
+    painter.setPen(Qt::black);
+    painter.drawRect(0, 0, m_coloringImage.width() - 1, m_coloringImage.height() - 1);
+    m_paintedImage = m_coloringImage;
+
+    painter.setPen(Qt::black);
+
+    // Первый проход (подготовка)
+    for(const auto& area: areas)
+    {
+        int colorId = area.colorId;
+        int w = _getNumberTextWidth(colorId);
+        int h = m_digitHeight;
+        auto interiorMatrix = Algoritms::makePointsMatrix(area.interiorPoints);
+        QPoint textPos = Algoritms::findTextPosition(interiorMatrix, w, h);
+        _drawContour(m_coloringImage, area.contourPoints);
+        _drawContour(m_paintedImage, area.contourPoints);
+        for(const auto& point: area.interiorPoints)
+            m_paintedImage.setPixelColor(point.x(), point.y(), QColor(colorsMap.key(colorId)));
+        if(textPos.x() != -1)
+        {
+            _drawNumber(textPos.x(), textPos.y(), colorId, painter);
+        }
+    }
+
+    // Работа с пустыми областями
+    for(int y = 0; y < m_paintedImage.height(); ++y)
+      for(int x = 0; x < m_paintedImage.width(); ++x)
+      {
+        if(m_paintedImage.pixelColor(x, y) == Qt::white)
+        {
+          QColor color = posterized.pixelColor(x, y);
+          QList<QPoint> filledPixels;
+          Algoritms::fill(x, y, m_paintedImage, color, &filledPixels);
         }
       }
 }
