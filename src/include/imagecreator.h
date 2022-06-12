@@ -16,6 +16,7 @@ public:
     const QImage& getPaintedImage() const {return m_paintedImage;}
     const QImage& getLegendImage() const {return m_legend;}
     QList<QPair<QImage, QString>> tileColoringImage(int rows, int columns) const;
+    void setColoringColor(const QColor& color);
 
 private:
     int m_scaleFactor = 2;
@@ -27,12 +28,14 @@ private:
     void _drawContour(QImage& image, const QList<QPoint>& points);
     void _createLegend(const QMap<QString, int>& colorsMap);
     void _drawNumber(int x, int y, uint8_t number, QPainter &painter);
+    QColor _generateNonExistingColor(const QList<QString>& existingColorsNames);
     void _makeDigits();
 
     QImage m_coloringImage;
     QImage m_paintedImage;
     QImage m_legend;
     QImage m_digits[10];
+    QColor m_coloringColor{Qt::black};
 };
 
 #endif // IMAGECREATOR_H

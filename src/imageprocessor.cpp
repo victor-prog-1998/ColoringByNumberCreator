@@ -211,9 +211,7 @@ void ImageProcessor::coloring()
 //    posterizedImage = posterizedImage.scaledToWidth(posterizedImage.width() * 2);
 //    edgesImage = edgesImage.scaledToWidth(edgesImage.width() * 2);
 
-    QMap<QString, int> colorsMap;
-
-    QList<QPair<QList<QPoint>,int>> contours;
+    QMap<QString, int> colorsMap; // color -> id
     QList<Area> areas;
 
     for(int y = 0; y < edgesImage.height(); ++y)
@@ -225,7 +223,10 @@ void ImageProcessor::coloring()
           QColor posterizedColor = posterizedImage.pixelColor(x, y);
           QString colorName = posterizedColor.name(QColor::HexRgb);
           if(!colorsMap.contains(colorName))
-            colorsMap[colorName] = colorsMap.size() + 1;
+          {
+            int id = colorsMap.size();
+            colorsMap[colorName] = id;
+          }
           QList<QPoint> filledPixels;
           Algoritms::fill(x, y, edgesImage, Qt::green, &filledPixels);
           auto contourPixels{Algoritms::findContour(edgesImage, filledPixels)};
@@ -235,7 +236,13 @@ void ImageProcessor::coloring()
         }
       }
 
-    m_imageCreator.createImages(posterizedImage, areas, colorsMap);
+    QColor coloringColor{m_configManager->coloringColor()};
+    m_imageCreator.setColoringColor(coloringColor);
+
+    if(m_configManager->simplify())
+        m_imageCreator.createSimplifiedImages(posterizedImage, areas, colorsMap);
+    else
+        m_imageCreator.createImages(posterizedImage, areas, colorsMap);
     QImage coloringImage = m_imageCreator.getColoringImage();
     QImage paintedImage = m_imageCreator.getPaintedImage();
     QImage legend = m_imageCreator.getLegendImage();

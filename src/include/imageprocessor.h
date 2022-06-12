@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QImage>
 #include "imageprovider.h"
+#include "configmanager.h"
 #include "imagecreator.h"
 
 class ImageProcessor : public QObject
@@ -12,6 +13,8 @@ class ImageProcessor : public QObject
 public:
     explicit ImageProcessor(QObject *parent = nullptr);
     void setImageProvider(ImageProvider* provider) {m_imageProvider = provider;}
+    void setConfigManager(ConfigManager* configManager)
+                         {m_configManager = configManager;}
     Q_INVOKABLE void posterize();
     Q_INVOKABLE bool setCurrentImage(const QString& source);
     Q_INVOKABLE void setColors(const QStringList& colors);
@@ -23,10 +26,12 @@ public:
     Q_INVOKABLE void coloring();
     Q_INVOKABLE void removeEdgesFromProvider();
     Q_INVOKABLE void removeColoringFromProvider();
-    Q_INVOKABLE void saveResults(const QString& folderPath, int tileRows = 0, int tileColumns = 0);
+    Q_INVOKABLE void saveResults(const QString& folderPath,
+                                 int tileRows = 0, int tileColumns = 0);
 private:
     QImage m_currentImage;
     ImageProvider *m_imageProvider;
+    ConfigManager *m_configManager;
     ImageCreator m_imageCreator;
     QList<QColor> m_colors;
     QString _generateSaveFolderName();

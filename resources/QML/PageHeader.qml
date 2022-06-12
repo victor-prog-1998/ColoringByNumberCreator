@@ -12,6 +12,7 @@ Rectangle{
     signal saveButtonClicked()
     signal edgesButtonClicked()
     signal paletteButtonClicked()
+    signal settingsButtonClicked()
 
     property alias modeComboBox: modeComboBox
     property alias paletteButton: paletteButton
@@ -72,6 +73,12 @@ Rectangle{
             source: "qrc:/icons/folder-icon.png"
             toolTipText: "Открыть изображение"
             onClicked: root.openButtonClicked()
+        }
+        ImageButton{
+            id: settingsImageButton
+            source: "qrc:/icons/settings-icon.png"
+            toolTipText: "Настройки"
+            onClicked: root.settingsButtonClicked()
         }
         ImageButton{
             id: saveButton

@@ -10,15 +10,17 @@ ImageCreator::ImageCreator()
 
 void ImageCreator::createSimplifiedImages(const QImage &posterized, const QList<Area>& areas, const QMap<QString, int> &colorsMap)
 {
+    // Цвет, которого нет в наборе, которым предварительно будет залито готовое изображение
+    QColor tmpColor = _generateNonExistingColor(colorsMap.keys());
     _createLegend(colorsMap);
     m_coloringImage = QImage(posterized.size(), QImage::Format_RGB888);
     m_coloringImage.fill(Qt::white);
-    QPainter painter(&m_coloringImage);
-    painter.setPen(Qt::black);
-    painter.drawRect(0, 0, m_coloringImage.width() - 1, m_coloringImage.height() - 1);
     m_paintedImage = m_coloringImage;
+    m_paintedImage.fill(tmpColor);
 
-    painter.setPen(Qt::black);
+    QPainter painter(&m_coloringImage);
+
+    painter.setPen(m_coloringColor); // цвет контуров
 
     // Первый проход (подготовка)
     for(const auto& area: areas)
@@ -26,23 +28,32 @@ void ImageCreator::createSimplifiedImages(const QImage &posterized, const QList<
         int colorId = area.colorId;
         int w = _getNumberTextWidth(colorId);
         int h = m_digitHeight;
+        // Получаем матрицу внутренних точек контура
         auto interiorMatrix = Algoritms::makePointsMatrix(area.interiorPoints);
+        // Находим позицию метки цвета
         QPoint textPos = Algoritms::findTextPosition(interiorMatrix, w, h);
+        // Если удалось вписать метку цвета в контур
         if(textPos.x() != -1)
         {
+            // Рисуем контур на раскраске
             _drawContour(m_coloringImage, area.contourPoints);
+            // Рисуем контур на готовом изображении
             _drawContour(m_paintedImage, area.contourPoints);
+            // Закрашиваем пиксели готового изображения текущим цветом
             for(const auto& point: area.interiorPoints)
                 m_paintedImage.setPixelColor(point.x(), point.y(), QColor(colorsMap.key(colorId)));
+            // Рисуем метку цвета на раскраске
             _drawNumber(textPos.x(), textPos.y(), colorId, painter);
         }
     }
 
-    // Работа с неразмеченными контурами
+    /* Работа с неразмеченными контурами, а также с контурами, которые образовались
+     * в ходе создания раскраски, но изначально в наборе их не было
+     */
     for(int y = 0; y < m_paintedImage.height(); ++y)
       for(int x = 0; x < m_paintedImage.width(); ++x)
       {
-        if(m_paintedImage.pixelColor(x, y) == Qt::white)
+        if(m_paintedImage.pixelColor(x, y) == tmpColor)
         {
           QColor color = posterized.pixelColor(x, y);
           QList<QPoint> filledPixels;
@@ -58,19 +69,23 @@ void ImageCreator::createSimplifiedImages(const QImage &posterized, const QList<
           }
         }
       }
+
+    painter.setPen(Qt::black); // цвет рамки
+    painter.drawRect(0, 0, m_coloringImage.width() - 1, m_coloringImage.height() - 1);
 }
 
 void ImageCreator::createImages(const QImage &posterized, const QList<Area> &areas, const QMap<QString, int> &colorsMap)
 {
+    // Цвет, которого нет в наборе, которым предварительно будет залито готовое изображение
+    QColor tmpColor = _generateNonExistingColor(colorsMap.keys());
     _createLegend(colorsMap);
     m_coloringImage = QImage(posterized.size(), QImage::Format_RGB888);
     m_coloringImage.fill(Qt::white);
-    QPainter painter(&m_coloringImage);
-    painter.setPen(Qt::black);
-    painter.drawRect(0, 0, m_coloringImage.width() - 1, m_coloringImage.height() - 1);
     m_paintedImage = m_coloringImage;
+    m_paintedImage.fill(tmpColor);
+    QPainter painter(&m_coloringImage);
 
-    painter.setPen(Qt::black);
+    painter.setPen(m_coloringColor); // цвет контуров
 
     // Первый проход (подготовка)
     for(const auto& area: areas)
@@ -78,29 +93,36 @@ void ImageCreator::createImages(const QImage &posterized, const QList<Area> &are
         int colorId = area.colorId;
         int w = _getNumberTextWidth(colorId);
         int h = m_digitHeight;
+        // Получаем матрицу внутренних точек контура
         auto interiorMatrix = Algoritms::makePointsMatrix(area.interiorPoints);
+        // Находим позицию метки цвета
         QPoint textPos = Algoritms::findTextPosition(interiorMatrix, w, h);
+        // Рисуем контур на раскраске и на готовом изображении
         _drawContour(m_coloringImage, area.contourPoints);
         _drawContour(m_paintedImage, area.contourPoints);
+        // Закрашиваем пиксели готового изображения текущим цветом
         for(const auto& point: area.interiorPoints)
             m_paintedImage.setPixelColor(point.x(), point.y(), QColor(colorsMap.key(colorId)));
+        // Если удалось вписать метку цвета в контур, то рисуем её
         if(textPos.x() != -1)
-        {
             _drawNumber(textPos.x(), textPos.y(), colorId, painter);
-        }
+
     }
 
-    // Работа с пустыми областями
+    // Работа с пустыми областями (которые образовались при отрисовке раскраски)
     for(int y = 0; y < m_paintedImage.height(); ++y)
       for(int x = 0; x < m_paintedImage.width(); ++x)
       {
-        if(m_paintedImage.pixelColor(x, y) == Qt::white)
+        if(m_paintedImage.pixelColor(x, y) == tmpColor)
         {
           QColor color = posterized.pixelColor(x, y);
           QList<QPoint> filledPixels;
           Algoritms::fill(x, y, m_paintedImage, color, &filledPixels);
         }
       }
+
+    painter.setPen(Qt::black); // цвет рамки
+    painter.drawRect(0, 0, m_coloringImage.width() - 1, m_coloringImage.height() - 1);
 }
 
 QList<QPair<QImage, QString>> ImageCreator::tileColoringImage(int rows, int columns) const
@@ -149,6 +171,22 @@ QList<QPair<QImage, QString>> ImageCreator::tileColoringImage(int rows, int colu
     return tiles;
 }
 
+void ImageCreator::setColoringColor(const QColor &color)
+{
+    m_coloringColor = color;
+    // + меняем цвета пикселей для изображений с цифрами
+    if(!m_digits[0].isNull())
+    {
+        for(int i = 0; i < 10; ++i)
+          for(int y = 0; y < m_digits[i].height(); ++y)
+            for(int x = 0; x < m_digits[i].width(); ++x)
+            {
+              if(m_digits[i].pixelColor(x, y) != Qt::white)
+                m_digits[i].setPixelColor(x, y, color);
+            }
+    }
+}
+
 int ImageCreator::_getNumberTextWidth(int number)
 {
     int count = _getCountOfDigits(number);
@@ -169,16 +207,16 @@ int ImageCreator::_getCountOfDigits(int number)
 void ImageCreator::_drawContour(QImage &image, const QList<QPoint> &points)
 {
     for(const auto& point: points)
-        image.setPixelColor(point.x(), point.y(), Qt::black);
+        image.setPixelColor(point.x(), point.y(), m_coloringColor);
 }
 
 void ImageCreator::_createLegend(const QMap<QString, int> &colorsMap)
 {
-    int margins = 10;
-    int spacing = 5;
-    int itemSize = 64;
-    int labelItemSize = 24;
-    int columnsCount = 4;
+    const int margins = 10;
+    const int spacing = 5;
+    const int itemSize = 64;
+    const int labelItemSize = 24;
+    const int columnsCount = 4;
     int rowsCount = (colorsMap.size() - 1) / columnsCount + 1;
     int legendWidth = margins * 2 + columnsCount * (itemSize + spacing) - spacing;
     int legendHeight = margins * 2 + rowsCount * (itemSize + spacing) - spacing;
@@ -192,7 +230,7 @@ void ImageCreator::_createLegend(const QMap<QString, int> &colorsMap)
     for(const auto& colorName: colorsMap.keys())
     {
         int id = colorsMap[colorName];
-        int index = id - 1;
+        int index = id;
         int row = index / columnsCount;
         int column = index % columnsCount;
         int x = margins + column * (itemSize + spacing);
@@ -219,9 +257,36 @@ void ImageCreator::_drawNumber(int x, int y, uint8_t number, QPainter& painter)
     }
 }
 
+QColor ImageCreator::_generateNonExistingColor(const QList<QString> &existingColorsNames)
+{
+    QColor newColor;
+    while(true)
+    {
+        // Генерируем цвет, не являющийся черно-белым
+        int r = qrand() % 85;         // [0   -  84]
+        int g = 85 + qrand() % 85;    // [85  - 169]
+        int b = 170 + qrand() % 85;   // [170 - 254]
+        newColor.setRgb(r, g, b);
+
+        bool exists = false;
+        for(const auto& colorName: existingColorsNames)
+        {
+            QColor color(colorName);
+            if(newColor == color)
+            {
+                exists = true;
+                break;
+            }
+        }
+        if(!exists)
+            break;
+    }
+    return newColor;
+}
+
 void ImageCreator::_makeDigits()
 {
-    QColor fontColor = Qt::black;
+    QColor fontColor = m_coloringColor;
     for(int i = 0; i < 10; ++i)
     {
         m_digits[i] = QImage(6, 9, QImage::Format_RGB888);
@@ -231,13 +296,13 @@ void ImageCreator::_makeDigits()
      *   012345     012345     012345     012345     012345
      *  +------+   +------+   +------+   +------+   +------+
      * 0|      |  0|      |  0|      |  0|      |  0|      |
-     * 1| **** |  1|   *  |  1| **** |  1| **** |  1| *  * |
+     * 1|  **  |  1|   *  |  1| **** |  1| **** |  1| *  * |
      * 2| *  * |  2|  **  |  2|    * |  2|    * |  2| *  * |
      * 3| *  * |  3| * *  |  3|    * |  3|    * |  3| *  * |
      * 4| *  * |  4|   *  |  4| **** |  4| **** |  4| **** |
      * 5| *  * |  5|   *  |  5| *    |  5|    * |  5|    * |
      * 6| *  * |  6|   *  |  6| *    |  6|    * |  6|    * |
-     * 7| **** |  7| **** |  7| **** |  7| **** |  7|    * |
+     * 7|  **  |  7| **** |  7| **** |  7| **** |  7|    * |
      * 8|      |  8|      |  8|      |  8|      |  8|      |
      *  +------+   +------+   +------+   +------+   +------+
      *
@@ -256,7 +321,7 @@ void ImageCreator::_makeDigits()
      */
 
     // ----- 0 -----
-    for(int y = 1; y <= 7; ++y)
+    for(int y = 2; y <= 6; ++y)
     {
         m_digits[0].setPixelColor(1, y, fontColor);
         m_digits[0].setPixelColor(4, y, fontColor);

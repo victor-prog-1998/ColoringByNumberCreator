@@ -24,5 +24,8 @@
         <file>icons/pencil-icon.png</file>
         <file>QML/ColorSidePanel.qml</file>
         <file>icons/save-icon.png</file>
+        <file>QML/ColorSelector.qml</file>
+        <file>QML/CustomCheckBox.qml</file>
+        <file>icons/settings-icon.png</file>
     </qresource>
 </RCC>

@@ -18,6 +18,7 @@ SOURCES += \
         src/imageprocessor.cpp \
         src/imageprovider.cpp \
         src/imagecreator.cpp \
+        src/configmanager.cpp \
         src/main.cpp
 
 RESOURCES += resources/qml.qrc
@@ -35,6 +36,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     src/include/algoritms.h \
+    src/include/configmanager.h \
     src/include/imagecreator.h \
     src/include/imageprocessor.h \
     src/include/imageprovider.h

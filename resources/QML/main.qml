@@ -26,6 +26,10 @@ Window {
         anchors.left: parent.left
         anchors.right: parent.right
         onOpenButtonClicked: fileDialog.open()
+        onSettingsButtonClicked: {
+            loadSettings();
+            settingsDialog.open()
+        }
         onSaveButtonClicked: saveDialog.open()
         modeComboBox.visible: root.posterized
         modeComboBox.onActivated: { // выбрано пользователем
@@ -217,6 +221,47 @@ Window {
     }
 
     Dialog{
+        id: settingsDialog
+        title: "Настройки"
+        width: 300
+        height: 200
+        contentItem: Item {
+            anchors.fill: parent
+            anchors.margins: 10
+            ColumnLayout{
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                spacing: 5
+                Label{
+                    text: "Цвет раскраски"
+                    font.pointSize: 12
+                }
+                ColorSelector{
+                    id: settingsColorSelector
+                }
+                CustomCheckBox{
+                    text: "Высокая детализация"
+                    id: highDetailizationCheckBox
+                }
+            }
+            CustomButton{
+                text: "Сохранить"
+                height: 30
+                width: 110
+                border.width: 1
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                onClicked: {
+                    saveSettings();
+                    imageProcessor.removeColoringFromProvider();
+                    settingsDialog.close();
+                }
+            }
+        }
+    }
+
+    Dialog{
         title: "Сохранение"
         id: saveDialog
         width: 500
@@ -287,6 +332,7 @@ Window {
                 enabled: folderTextField.text.length > 0
                 text: "Сохранить"
                 height: 30
+                width: 110
                 border.width: 1
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
@@ -317,5 +363,19 @@ Window {
         }
     }
 
+    function loadSettings()
+    {
+        let simplify = configManager.simplify();
+        let coloringColor = configManager.coloringColor();
+        settingsColorSelector.setCurrentColor(coloringColor);
+        highDetailizationCheckBox.checked = !simplify;
+    }
+
+    function saveSettings()
+    {
+        let simplify = !highDetailizationCheckBox.checked;
+        let coloringColor = settingsColorSelector.getCurrentColor();
+        configManager.setConfigs(simplify, coloringColor);
+    }
 
 }

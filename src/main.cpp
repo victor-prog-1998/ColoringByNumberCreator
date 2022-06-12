@@ -4,6 +4,7 @@
 #include <QQmlContext>
 #include "include/imageprovider.h"
 #include "include/imageprocessor.h"
+#include "include/configmanager.h"
 
 int main(int argc, char *argv[])
 {
@@ -11,12 +12,15 @@ int main(int argc, char *argv[])
 
     QApplication app(argc, argv);
     ImageProvider imageProvider;
+    ConfigManager configManager;
     ImageProcessor imageProcessor;
     imageProcessor.setImageProvider(&imageProvider);
+    imageProcessor.setConfigManager(&configManager);
 
     QQmlApplicationEngine engine;
 
     engine.rootContext()->setContextProperty("imageProcessor", &imageProcessor);
+    engine.rootContext()->setContextProperty("configManager", &configManager);
 
     const QUrl url(QStringLiteral("qrc:/QML/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
