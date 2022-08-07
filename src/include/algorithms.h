@@ -1,5 +1,5 @@
-#ifndef ALGORITMS_H
-#define ALGORITMS_H
+#ifndef ALGORITHMS_H
+#define ALGORITHMS_H
 #include <QImage>
 #include "datatypes.h"
 
@@ -32,4 +32,4 @@ namespace Algorithms
                             int textHeight);
 };
 
-#endif // ALGORITMS_H
+#endif // ALGORITHMS_H

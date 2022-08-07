@@ -5,7 +5,7 @@
 #include <QQueue>
 #include <QDate>
 #include <QDir>
-#include "include/algoritms.h"
+#include "include/algorithms.h"
 
 ImageProcessor::ImageProcessor(QObject *parent) : QObject(parent)
 {

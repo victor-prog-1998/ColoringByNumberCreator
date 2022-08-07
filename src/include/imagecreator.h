@@ -1,7 +1,7 @@
 #ifndef IMAGECREATOR_H
 #define IMAGECREATOR_H
 #include <QImage>
-#include "algoritms.h"
+#include "algorithms.h"
 
 
 

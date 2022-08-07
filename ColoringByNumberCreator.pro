@@ -14,7 +14,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-        src/algoritms.cpp \
+        src/algorithms.cpp \
         src/imageprocessor.cpp \
         src/imageprovider.cpp \
         src/imagecreator.cpp \
@@ -35,7 +35,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    src/include/algoritms.h \
+    src/include/algorithms.h \
     src/include/configmanager.h \
     src/include/datatypes.h \
     src/include/imagecreator.h \

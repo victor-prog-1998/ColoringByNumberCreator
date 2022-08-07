@@ -1,4 +1,4 @@
-#include "include/algoritms.h"
+#include "include/algorithms.h"
 #include "math.h"
 #include <QDebug>
 #include <QQueue>
