@@ -3,19 +3,18 @@
 #include <QDebug>
 #include <QQueue>
 
-
-void Algoritms::posterize(const QImage &sourceImage, QImage &result, const QList<QColor> &colors)
+namespace Algorithms
 {
-    for(int y = 0; y < sourceImage.height(); ++y)
-      for(int x = 0; x < sourceImage.width(); ++x)
-      {
-        QColor srcPixColor = sourceImage.pixelColor(x, y);
-        QColor posterizedPixColor = colors[Algoritms::findNearestColorIndex(srcPixColor, colors)];
-        result.setPixelColor(x, y, posterizedPixColor);
-      }
+
+double colorDistance(const QColor &color1, const QColor &color2)
+{
+    int dr = color1.red() - color2.red();
+    int dg = color1.green() - color2.green();
+    int db = color1.blue() - color2.blue();
+    return 0.2126 * dr * dr + 0.7152 * dg * dg + 0.0722 * db * db;
 }
 
-int Algoritms::findNearestColorIndex(const QColor &color, const QList<QColor> &colors)
+int findNearestColorIndex(const QColor &color, const QList<QColor> &colors)
 {
     int minDistanceIndex = 0;
     double minDistance = colorDistance(color, colors[0]);
@@ -31,27 +30,20 @@ int Algoritms::findNearestColorIndex(const QColor &color, const QList<QColor> &c
     return minDistanceIndex;
 }
 
-double Algoritms::colorDistance(const QColor &color1, const QColor &color2)
+void posterize(const QImage &sourceImage, QImage &result,
+               const QList<QColor> &colors)
 {
-    int dr = color1.red() - color2.red();
-    int dg = color1.green() - color2.green();
-    int db = color1.blue() - color2.blue();
-    return 0.2126 * dr * dr + 0.7152 * dg * dg + 0.0722 * db * db;
-    //return 30 * dr * dr + 59 * dg * dg + 11 * db * db;
+    for(int y = 0; y < sourceImage.height(); ++y)
+      for(int x = 0; x < sourceImage.width(); ++x)
+      {
+        QColor srcPixColor = sourceImage.pixelColor(x, y);
+        QColor posterizedPixColor =
+                colors[findNearestColorIndex(srcPixColor, colors)];
+        result.setPixelColor(x, y, posterizedPixColor);
+      }
 }
 
-double Algoritms::colorDistanceLab(const QColor &color1, const QColor &color2)
-{
-    double l1, l2, a1, a2, b1, b2;
-    rgb2Lab(color1, l1, a1, b1);
-    rgb2Lab(color2, l2, a2, b2);
-    double dL = l1 - l2;
-    double dA = a1 - a2;
-    double dB = b1 - b2;
-    return dL * dL + dA * dA + dB * dB;
-}
-
-void Algoritms::rgb2xyz(const QColor &rgbColor, double &x, double &y, double &z)
+void rgb2xyz(const QColor &rgbColor, double &x, double &y, double &z)
 {
     /*
      * |X| = |0.49    0.31   0.2    |   |R|
@@ -68,7 +60,17 @@ void Algoritms::rgb2xyz(const QColor &rgbColor, double &x, double &y, double &z)
     z = g * 0.01 + b * 0.99;
 }
 
-void Algoritms::xyz2Lab(double x, double y, double z, double &l, double &a, double &b)
+double fLab(double t)
+{
+    constexpr double t0 = (6.0 / 29) * (6.0 / 29) * (6.0 / 29);
+    constexpr double a = (29.0 / 6) * (29.0 / 6) / 3;
+    constexpr double b = 4.0 / 29;
+    constexpr double _1_3 = 1.0 / 3;
+    if(t > t0) return pow(t, _1_3);
+    return a * t + b;
+}
+
+void xyz2Lab(double x, double y, double z, double &l, double &a, double &b)
 {
     // в d65: 0.9504 1.0000 1.0888
     const double xN = 0.9642;
@@ -84,24 +86,26 @@ void Algoritms::xyz2Lab(double x, double y, double z, double &l, double &a, doub
     b = 200 * (f_y - f_z);
 }
 
-void Algoritms::rgb2Lab(const QColor &rgbColor, double &l, double &a, double &b)
+void rgb2Lab(const QColor &rgbColor, double &l, double &a, double &b)
 {
     double x, y, z;
     rgb2xyz(rgbColor, x, y, z);
     xyz2Lab(x, y, z, l, a, b);
 }
 
-double Algoritms::fLab(double t)
+double colorDistanceLab(const QColor &color1, const QColor &color2)
 {
-    constexpr double t0 = (6.0 / 29) * (6.0 / 29) * (6.0 / 29);
-    constexpr double a = (29.0 / 6) * (29.0 / 6) / 3;
-    constexpr double b = 4.0 / 29;
-    constexpr double _1_3 = 1.0 / 3;
-    if(t > t0) return pow(t, _1_3);
-    return a * t + b;
+    double l1, l2, a1, a2, b1, b2;
+    rgb2Lab(color1, l1, a1, b1);
+    rgb2Lab(color2, l2, a2, b2);
+    double dL = l1 - l2;
+    double dA = a1 - a2;
+    double dB = b1 - b2;
+    return dL * dL + dA * dA + dB * dB;
 }
 
-void Algoritms::medianFilter(const QImage &sourceImage, QImage &result, int maskSize, int iterations)
+void medianFilter(const QImage &sourceImage, QImage &result,
+                  int maskSize, int iterations)
 {
   if(maskSize % 2 == 0)
   {
@@ -132,12 +136,14 @@ void Algoritms::medianFilter(const QImage &sourceImage, QImage &result, int mask
             else
             {
               color = inputImage.pixelColor(xMask, yMask);
-              value = 0.2126 * color.red() + 0.7152 * color.green() + 0.0722 * color.blue();
+              value = 0.2126 * color.red() + 0.7152 * color.green() +
+                      0.0722 * color.blue();
             }
             maskValues << QPair<double,QColor>{value, color};
           }
         std::sort(maskValues.begin(), maskValues.end(),
-                  [](const QPair<double,QColor>& a, const QPair<double,QColor>& b)
+                  [](const QPair<double,QColor>& a,
+                  const QPair<double,QColor>& b)
         {
             return b.first > a.first;
         });
@@ -149,11 +155,13 @@ void Algoritms::medianFilter(const QImage &sourceImage, QImage &result, int mask
   }
 }
 
-void Algoritms::averagingFilter(const QImage &sourceImage, QImage &result, int maskSize, int iterations)
+void averagingFilter(const QImage &sourceImage, QImage &result,
+                     int maskSize, int iterations)
 {
     if(maskSize % 2 == 0)
     {
-      qDebug() << "Некорректный размер маски усредняющего фильтра: " << maskSize;
+      qDebug() << "Некорректный размер маски "
+                  "усредняющего фильтра: " << maskSize;
       return;
     }
     QImage inputImage{sourceImage}; // на каждой итерации применяется фильтр
@@ -197,7 +205,8 @@ void Algoritms::averagingFilter(const QImage &sourceImage, QImage &result, int m
     }
 }
 
-void Algoritms::fill(int x, int y, QImage &image, const QColor &fillColor, QList<QPoint> *pixels)
+void fill(int x, int y, QImage &image, const QColor &fillColor,
+          QList<QPoint> *pixels)
 {
     QColor pixColor = image.pixelColor(x, y);
     if(pixColor == fillColor)
@@ -213,10 +222,12 @@ void Algoritms::fill(int x, int y, QImage &image, const QColor &fillColor, QList
            auto west{pix};
            auto east{pix};
            // смещение влево, пока цвет west равен pixColor и пока west не вышел за границы
-           while(west.x() >= 0 && image.pixelColor(west.x(), west.y()) == pixColor)
+           while(west.x() >= 0 &&
+                 image.pixelColor(west.x(), west.y()) == pixColor)
                west.setX(west.x() - 1);
            // смещение вправо, пока цвет east равен pixColor и пока east не вышел за границы
-           while(east.x() < image.width() && image.pixelColor(east.x(), east.y()) == pixColor)
+           while(east.x() < image.width() &&
+                 image.pixelColor(east.x(), east.y()) == pixColor)
                east.setX(east.x() + 1);
 
            // проход по пикселям между west и east (не включая их)
@@ -244,7 +255,7 @@ void Algoritms::fill(int x, int y, QImage &image, const QColor &fillColor, QList
     }
 }
 
-QList<QColor> Algoritms::getUniqueColors(const QImage &image)
+QList<QColor> getUniqueColors(const QImage &image)
 {
     QList<QColor> uniqueColors;
     for(int y = 0; y < image.height(); ++y)
@@ -257,7 +268,7 @@ QList<QColor> Algoritms::getUniqueColors(const QImage &image)
     return uniqueColors;
 }
 
-QList<QPoint> Algoritms::findContour(const QImage &image, const QList<QPoint> &pixels)
+QList<QPoint> findContour(const QImage &image, const QList<QPoint> &pixels)
 {
     // все предыдущие найденные области залиты черным, а текущая - зеленым
     // проверка выхода за пределы не нужна, так как в edges рисуется рамка
@@ -288,76 +299,81 @@ QList<QPoint> Algoritms::findContour(const QImage &image, const QList<QPoint> &p
 
 
 
-QPair<QList<QColor>, QList<QColor> > Algoritms::splitPixels(const QList<QColor> &pixels)
+QPair<QList<QColor>, QList<QColor> > splitPixels(const QList<QColor> &pixels)
 {
     if(pixels.size() < 2)
       return {QList<QColor>(), QList<QColor>()};
 
+    uint64_t redSum {0};
+    uint64_t greenSum {0};
+    uint64_t blueSum {0};
 
-    int rMax, rMin, gMax, gMin, bMax, bMin, dr, dg, db, maxDiff;
+    for(const auto& pix: pixels)
+    {
+        redSum += pix.red();
+        greenSum += pix.green();
+        blueSum += pix.blue();
+    }
+
+    int redAvg = qRound(static_cast<double>(redSum) / pixels.size());
+    int greenAvg = qRound(static_cast<double>(greenSum) / pixels.size());
+    int blueAvg = qRound(static_cast<double>(blueSum) / pixels.size());
+
+    int redMax, redMin, greenMax, greenMin, blueMax, blueMin;
+    uint64_t redDisp, greenDisp, blueDisp;
+    redMax = greenMax = blueMax = 0;
+    redMin = greenMin = blueMin = 255;
+    redDisp = greenDisp = blueDisp = 0;
+
+    for(const auto& pix: pixels)
+    {
+        redDisp += std::abs(pix.red() - redAvg);
+        greenDisp += std::abs(pix.green() - greenAvg);
+        blueDisp += std::abs(pix.blue() - blueAvg);
+
+        redMin = std::min(redMin, pix.red());
+        greenMin = std::min(greenMin, pix.green());
+        blueMin = std::min(blueMin, pix.blue());
+        redMax = std::max(redMax, pix.red());
+        greenMax = std::max(greenMax, pix.green());
+        blueMax = std::max(blueMax, pix.blue());
+    }
+
+    uint64_t maxDisp;
+    maxDisp = std::max(redDisp, std::max(greenDisp, blueDisp));
+
     QList<QColor> leftPixels;
     QList<QColor> rightPixels;
-    rMax = rMin = pixels[0].red();
-    gMax = gMin = pixels[0].green();
-    bMax = bMin = pixels[0].blue();
-    for(int i = 1; i < pixels.size(); ++i)
+
+    for(const auto& pix: pixels)
     {
-        int r = pixels[i].red();
-        int g = pixels[i].green();
-        int b = pixels[i].blue();
-        if(r < rMin) rMin = r;
-        else if(r > rMax) rMax = r;
-        if(g < gMin) gMin = g;
-        else if(g > gMax) gMax = g;
-        if(b < bMin) bMin = b;
-        else if(b > bMax) bMax = b;
+       if(maxDisp == redDisp)
+       {
+           if(pix.red() < redAvg)
+               leftPixels << pix;
+           else
+               rightPixels << pix;
+       }
+       else if(maxDisp == greenDisp)
+       {
+           if(pix.green() < greenAvg)
+               leftPixels << pix;
+           else
+               rightPixels << pix;
+       }
+       else
+       {
+           if(pix.blue() < blueAvg)
+               leftPixels << pix;
+           else
+               rightPixels << pix;
+       }
     }
-    dr = rMax - rMin;
-    dg = gMax - gMin;
-    db = bMax - bMin;
-    maxDiff = dr;
-    if(dg > maxDiff) maxDiff = dg;
-    if(db > maxDiff) maxDiff = db;
-    if(maxDiff == dr)
-    {
-        int rAvg = rMin + dr / 2;
-        for(int i = 0; i < pixels.size(); ++i)
-        {
-            int r = pixels[i].red();
-            if(r < rAvg)
-                leftPixels << pixels[i];
-            else
-                rightPixels << pixels[i];
-        }
-    }
-    else if(maxDiff == dg)
-    {
-        int gAvg = gMin + dg / 2;
-        for(int i = 0; i < pixels.size(); ++i)
-        {
-            int g = pixels[i].green();
-            if(g < gAvg)
-                leftPixels << pixels[i];
-            else
-                rightPixels << pixels[i];
-        }
-    }
-    else if(maxDiff == db)
-    {
-        int bAvg = bMin + db / 2;
-        for(int i = 0; i < pixels.size(); ++i)
-        {
-            int b = pixels[i].blue();
-            if(b < bAvg)
-                leftPixels << pixels[i];
-            else
-                rightPixels << pixels[i];
-        }
-    }
+
     return {leftPixels, rightPixels};
 }
 
-QList<QColor> Algoritms::getImagePixels(const QImage& image)
+QList<QColor> getImagePixels(const QImage& image)
 {
     QList<QColor> pixels;
     for(int y = 0; y < image.height(); ++y)
@@ -366,7 +382,7 @@ QList<QColor> Algoritms::getImagePixels(const QImage& image)
     return pixels;
 }
 
-QColor Algoritms::averageColor(const QList<QColor> &colors)
+QColor averageColor(const QList<QColor> &colors)
 {
     if(colors.isEmpty())
     {
@@ -389,7 +405,7 @@ QColor Algoritms::averageColor(const QList<QColor> &colors)
     return QColor(r, g, b);
 }
 
-PointsMatrix Algoritms::makePointsMatrix(const QList<QPoint> &points)
+DataTypes::PointsMatrix makePointsMatrix(const QList<QPoint> &points)
 {
     int minX, maxX, minY, maxY;
     minX = maxX = points[0].x();
@@ -404,7 +420,7 @@ PointsMatrix Algoritms::makePointsMatrix(const QList<QPoint> &points)
       if(y > maxY) maxY = y;
     }
 
-    PointsMatrix matrix;
+    DataTypes::PointsMatrix matrix;
     matrix.x = minX;
     matrix.y = minY;
 
@@ -429,7 +445,8 @@ PointsMatrix Algoritms::makePointsMatrix(const QList<QPoint> &points)
     return matrix;
 }
 
-PointsMatrix Algoritms::makeScaledPointsMatrix(const QList<QPoint> &points, uint8_t scale)
+DataTypes::PointsMatrix makeScaledPointsMatrix(const QList<QPoint> &points,
+                                               uint8_t scale)
 {
     int minX, maxX, minY, maxY;
     minX = maxX = points[0].x();
@@ -437,12 +454,12 @@ PointsMatrix Algoritms::makeScaledPointsMatrix(const QList<QPoint> &points, uint
     {
       int x = points[i].x();
       int y = points[i].y();
-      if(x < minX) minX = x;
-      if(x > maxX) maxX = x;
-      if(y < minY) minY = y;
-      if(y > maxY) maxY = y;
+      minX = std::min(minX, x);
+      maxX = std::max(maxX, x);
+      minY = std::min(minY, y);
+      maxY = std::max(maxY, y);
     }
-    PointsMatrix matrix;
+    DataTypes::PointsMatrix matrix;
     matrix.x = minX * scale;
     matrix.y = minY * scale;
 
@@ -470,7 +487,8 @@ PointsMatrix Algoritms::makeScaledPointsMatrix(const QList<QPoint> &points, uint
     return matrix;
 }
 
-QPoint Algoritms::findTextPosition(const PointsMatrix &matrix, int textWidth, int textHeight)
+QPoint findTextPosition(const DataTypes::PointsMatrix &matrix,
+                        int textWidth, int textHeight)
 {
     if(matrix.width() < textWidth || matrix.height() < textHeight)
         return QPoint{-1, -1};
@@ -491,4 +509,5 @@ QPoint Algoritms::findTextPosition(const PointsMatrix &matrix, int textWidth, in
             return QPoint{matrix.x + x, matrix.y + y};
       }
     return QPoint{-1, -1};
+}
 }

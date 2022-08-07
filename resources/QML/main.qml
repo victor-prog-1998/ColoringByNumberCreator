@@ -9,7 +9,7 @@ Window {
     visible: true
     width: 640
     height: 480
-    title: qsTr("Hello World")
+    title: qsTr("Создание раскрасок по номерам")
     property string imageOriginalSource
     property string posterizedImageSource: "image://provider/posterized"
     property string edgesImageSource: "image://provider/edges"

@@ -35,10 +35,6 @@ private:
     ImageCreator m_imageCreator;
     QList<QColor> m_colors;
     QString _generateSaveFolderName();
-
-
-
-
 signals:
 
 };

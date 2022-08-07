@@ -21,11 +21,11 @@ void ImageProcessor::posterize()
     QImage filtered(m_currentImage.size(), QImage::Format_RGB888);
     QImage posterized(m_currentImage.size(), QImage::Format_RGB888);
 
-    Algoritms::medianFilter(m_currentImage, filtered, 3, 2);
+    Algorithms::medianFilter(m_currentImage, filtered, 3, 2);
 
-    Algoritms::averagingFilter(filtered, filtered, 3, 2);
-    Algoritms::posterize(filtered, posterized, m_colors);
-    Algoritms::medianFilter(posterized, posterized, 3, 3);
+    Algorithms::averagingFilter(filtered, filtered, 3, 2);
+    Algorithms::posterize(filtered, posterized, m_colors);
+    Algorithms::medianFilter(posterized, posterized, 3, 3);
 
     m_imageProvider->add("posterized", posterized);
 }
@@ -73,7 +73,7 @@ QStringList ImageProcessor::findOptimalPalette(int colorsCount)
 
 
     QQueue<QList<QColor>> pixelsQueue;
-    pixelsQueue.enqueue(Algoritms::getImagePixels(m_currentImage));
+    pixelsQueue.enqueue(Algorithms::getImagePixels(m_currentImage));
 
     QList<QList<QColor>> colorsList;
     int count = colorsCount;
@@ -83,7 +83,7 @@ QStringList ImageProcessor::findOptimalPalette(int colorsCount)
       for(int i = 0; i < queueSize; ++i)
       {
         auto forSplit = pixelsQueue.dequeue();  // извлекаем из очереди
-        auto splitted = Algoritms::splitPixels(forSplit); // разбиваем
+        auto splitted = Algorithms::splitPixels(forSplit); // разбиваем
         if(splitted.first.isEmpty() || splitted.second.isEmpty()) // не разбивается => записываем в список и больше не рассматриваем
         {
           colorsList << forSplit;
@@ -114,7 +114,7 @@ QStringList ImageProcessor::findOptimalPalette(int colorsCount)
 
     for(const auto& colors: colorsList)
     {
-        QColor paletteColor = Algoritms::averageColor(colors);
+        QColor paletteColor = Algorithms::averageColor(colors);
         result << paletteColor.name(QColor::HexRgb);
     }
 
@@ -142,7 +142,7 @@ void ImageProcessor::setPixelColor(int x, int y, const QColor &color)
 void ImageProcessor::fill(int x, int y, const QColor &fillColor)
 {
     QImage img = m_imageProvider->get("posterized");
-    Algoritms::fill(x, y, img, fillColor);
+    Algorithms::fill(x, y, img, fillColor);
     m_imageProvider->add("posterized", img);
 }
 
@@ -151,23 +151,6 @@ void ImageProcessor::edges()
     if(m_imageProvider->contains("edges"))
         return;
     QImage posterized = m_imageProvider->get("posterized");
-
-    // удаление тонких линий и одиночных пикселей
-
-//    for(int y = 1; y < posterized.height() - 1; ++y)
-//      for(int x = 1; x < posterized.width() - 1; ++x)
-//      {
-//        QColor current = posterized.pixelColor(x, y);
-//        QColor top = posterized.pixelColor(x, y - 1);
-//        QColor bottom = posterized.pixelColor(x, y + 1);
-//        QColor left = posterized.pixelColor(x - 1, y);
-//        QColor right = posterized.pixelColor(x + 1, y);
-
-//        if(current != left && current != right)
-//          posterized.setPixelColor(x, y, left);
-//        else if(current != top && current != bottom)
-//          posterized.setPixelColor(x, y, top);
-//      }
 
     // нахождение краёв
     QImage edgesImage(posterized.size(), QImage::Format_RGB888);
@@ -208,11 +191,8 @@ void ImageProcessor::coloring()
     QImage posterizedImage{m_imageProvider->get("posterized")};
     QImage edgesImage{m_imageProvider->get("edges")};
 
-//    posterizedImage = posterizedImage.scaledToWidth(posterizedImage.width() * 2);
-//    edgesImage = edgesImage.scaledToWidth(edgesImage.width() * 2);
-
     QMap<QString, int> colorsMap; // color -> id
-    QList<Area> areas;
+    QList<DataTypes::Area> areas;
 
     for(int y = 0; y < edgesImage.height(); ++y)
       for(int x = 0; x < edgesImage.width(); ++x)
@@ -228,9 +208,10 @@ void ImageProcessor::coloring()
             colorsMap[colorName] = id;
           }
           QList<QPoint> filledPixels;
-          Algoritms::fill(x, y, edgesImage, Qt::green, &filledPixels);
-          auto contourPixels{Algoritms::findContour(edgesImage, filledPixels)};
-          Area area{contourPixels, filledPixels, colorsMap[colorName]};
+          Algorithms::fill(x, y, edgesImage, Qt::green, &filledPixels);
+          auto contourPixels{Algorithms::findContour(edgesImage, filledPixels)};
+          DataTypes::Area area{contourPixels, filledPixels,
+                               colorsMap[colorName]};
           areas << area;
           QString str;
         }
@@ -240,7 +221,8 @@ void ImageProcessor::coloring()
     m_imageCreator.setColoringColor(coloringColor);
 
     if(m_configManager->simplify())
-        m_imageCreator.createSimplifiedImages(posterizedImage, areas, colorsMap);
+        m_imageCreator.createSimplifiedImages(posterizedImage, areas,
+                                              colorsMap);
     else
         m_imageCreator.createImages(posterizedImage, areas, colorsMap);
     QImage coloringImage = m_imageCreator.getColoringImage();
@@ -264,7 +246,8 @@ void ImageProcessor::removeColoringFromProvider()
     m_imageProvider->remove("legend");
 }
 
-void ImageProcessor::saveResults(const QString& folderPath, int tileRows, int tileColumns)
+void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
+                                 int tileColumns)
 {
     QString path = folderPath + '/';
     if(!m_imageProvider->contains("coloring"))
@@ -299,7 +282,3 @@ QString ImageProcessor::_generateSaveFolderName()
     QString suffix = dateTime.toString("dd-MMMM-yy_hh-mm-ss");
     return "Coloring_" + suffix;
 }
-
-
-
-

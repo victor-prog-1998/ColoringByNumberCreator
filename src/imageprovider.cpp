@@ -6,7 +6,8 @@ ImageProvider::ImageProvider() : QQuickImageProvider(QQuickImageProvider::Image)
 
 }
 
-QImage ImageProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize) /*override*/
+QImage ImageProvider::requestImage(const QString &id, QSize *size,
+                                   const QSize &requestedSize) /*override*/
 {
     Q_UNUSED(size)
     Q_UNUSED(requestedSize)

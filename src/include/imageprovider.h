@@ -7,7 +7,8 @@ class ImageProvider : public QQuickImageProvider
 {
 public:
     ImageProvider();
-    QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
+    QImage requestImage(const QString &id, QSize *size,
+                        const QSize &requestedSize) override;
     void clear() {m_imagesMap.clear();}
     void add(const QString& id, const QImage& image);
     int size() const {return m_imagesMap.size();}

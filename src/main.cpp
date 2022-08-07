@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QApplication>
 #include <QQmlContext>
+#include <QIcon>
 #include "include/imageprovider.h"
 #include "include/imageprocessor.h"
 #include "include/configmanager.h"
@@ -11,6 +12,10 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
     QApplication app(argc, argv);
+
+    app.setApplicationName("Создание раскрасок по номерам");
+    app.setWindowIcon(QIcon(":/icons/app-icon.png"));
+
     ImageProvider imageProvider;
     ConfigManager configManager;
     ImageProcessor imageProcessor;

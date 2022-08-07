@@ -8,7 +8,9 @@ ImageCreator::ImageCreator()
     _makeDigits();
 }
 
-void ImageCreator::createSimplifiedImages(const QImage &posterized, const QList<Area>& areas, const QMap<QString, int> &colorsMap)
+void ImageCreator::createSimplifiedImages(const QImage &posterized,
+                                          const QList<DataTypes::Area>& areas,
+                                          const QMap<QString, int> &colorsMap)
 {
     // Цвет, которого нет в наборе, которым предварительно будет залито готовое изображение
     QColor tmpColor = _generateNonExistingColor(colorsMap.keys());
@@ -29,9 +31,9 @@ void ImageCreator::createSimplifiedImages(const QImage &posterized, const QList<
         int w = _getNumberTextWidth(colorId);
         int h = m_digitHeight;
         // Получаем матрицу внутренних точек контура
-        auto interiorMatrix = Algoritms::makePointsMatrix(area.interiorPoints);
+        auto interiorMatrix = Algorithms::makePointsMatrix(area.interiorPoints);
         // Находим позицию метки цвета
-        QPoint textPos = Algoritms::findTextPosition(interiorMatrix, w, h);
+        QPoint textPos = Algorithms::findTextPosition(interiorMatrix, w, h);
         // Если удалось вписать метку цвета в контур
         if(textPos.x() != -1)
         {
@@ -41,7 +43,8 @@ void ImageCreator::createSimplifiedImages(const QImage &posterized, const QList<
             _drawContour(m_paintedImage, area.contourPoints);
             // Закрашиваем пиксели готового изображения текущим цветом
             for(const auto& point: area.interiorPoints)
-                m_paintedImage.setPixelColor(point.x(), point.y(), QColor(colorsMap.key(colorId)));
+                m_paintedImage.setPixelColor(point.x(), point.y(),
+                                             QColor(colorsMap.key(colorId)));
             // Рисуем метку цвета на раскраске
             _drawNumber(textPos.x(), textPos.y(), colorId, painter);
         }
@@ -57,12 +60,12 @@ void ImageCreator::createSimplifiedImages(const QImage &posterized, const QList<
         {
           QColor color = posterized.pixelColor(x, y);
           QList<QPoint> filledPixels;
-          Algoritms::fill(x, y, m_paintedImage, color, &filledPixels);
+          Algorithms::fill(x, y, m_paintedImage, color, &filledPixels);
           int colorId = colorsMap[color.name(QColor::HexRgb)];
           int w = _getNumberTextWidth(colorId);
           int h = m_digitHeight;
-          auto matrix = Algoritms::makePointsMatrix(filledPixels);
-          auto textPos = Algoritms::findTextPosition(matrix, w, h);
+          auto matrix = Algorithms::makePointsMatrix(filledPixels);
+          auto textPos = Algorithms::findTextPosition(matrix, w, h);
           if(textPos.x() != -1)
           {
               _drawNumber(textPos.x(), textPos.y(), colorId, painter);
@@ -71,10 +74,13 @@ void ImageCreator::createSimplifiedImages(const QImage &posterized, const QList<
       }
 
     painter.setPen(Qt::black); // цвет рамки
-    painter.drawRect(0, 0, m_coloringImage.width() - 1, m_coloringImage.height() - 1);
+    painter.drawRect(0, 0, m_coloringImage.width() - 1,
+                     m_coloringImage.height() - 1);
 }
 
-void ImageCreator::createImages(const QImage &posterized, const QList<Area> &areas, const QMap<QString, int> &colorsMap)
+void ImageCreator::createImages(const QImage &posterized,
+                                const QList<DataTypes::Area> &areas,
+                                const QMap<QString, int> &colorsMap)
 {
     // Цвет, которого нет в наборе, которым предварительно будет залито готовое изображение
     QColor tmpColor = _generateNonExistingColor(colorsMap.keys());
@@ -94,15 +100,16 @@ void ImageCreator::createImages(const QImage &posterized, const QList<Area> &are
         int w = _getNumberTextWidth(colorId);
         int h = m_digitHeight;
         // Получаем матрицу внутренних точек контура
-        auto interiorMatrix = Algoritms::makePointsMatrix(area.interiorPoints);
+        auto interiorMatrix = Algorithms::makePointsMatrix(area.interiorPoints);
         // Находим позицию метки цвета
-        QPoint textPos = Algoritms::findTextPosition(interiorMatrix, w, h);
+        QPoint textPos = Algorithms::findTextPosition(interiorMatrix, w, h);
         // Рисуем контур на раскраске и на готовом изображении
         _drawContour(m_coloringImage, area.contourPoints);
         _drawContour(m_paintedImage, area.contourPoints);
         // Закрашиваем пиксели готового изображения текущим цветом
         for(const auto& point: area.interiorPoints)
-            m_paintedImage.setPixelColor(point.x(), point.y(), QColor(colorsMap.key(colorId)));
+            m_paintedImage.setPixelColor(point.x(), point.y(),
+                                         QColor(colorsMap.key(colorId)));
         // Если удалось вписать метку цвета в контур, то рисуем её
         if(textPos.x() != -1)
             _drawNumber(textPos.x(), textPos.y(), colorId, painter);
@@ -117,19 +124,23 @@ void ImageCreator::createImages(const QImage &posterized, const QList<Area> &are
         {
           QColor color = posterized.pixelColor(x, y);
           QList<QPoint> filledPixels;
-          Algoritms::fill(x, y, m_paintedImage, color, &filledPixels);
+          Algorithms::fill(x, y, m_paintedImage, color, &filledPixels);
         }
       }
 
     painter.setPen(Qt::black); // цвет рамки
-    painter.drawRect(0, 0, m_coloringImage.width() - 1, m_coloringImage.height() - 1);
+    painter.drawRect(0, 0, m_coloringImage.width() - 1,
+                     m_coloringImage.height() - 1);
 }
 
-QList<QPair<QImage, QString>> ImageCreator::tileColoringImage(int rows, int columns) const
+QList<QPair<QImage, QString>> ImageCreator::tileColoringImage(int rows,
+                                                              int columns) const
 {
     QList<QPair<QImage,QString>> tiles;
-    int tileWidth = std::ceil(static_cast<double>(m_coloringImage.width()) / columns);
-    int tileHeight = std::ceil(static_cast<double>(m_coloringImage.height()) / rows);
+    int tileWidth = std::ceil(static_cast<double>
+                              (m_coloringImage.width()) / columns);
+    int tileHeight = std::ceil(static_cast<double>
+                               (m_coloringImage.height()) / rows);
     int lastTileWidth = m_coloringImage.width() % tileWidth;
     if(lastTileWidth == 0) lastTileWidth = tileWidth;
     int lastTileHeight = m_coloringImage.height() % tileHeight;
@@ -157,13 +168,15 @@ QList<QPair<QImage, QString>> ImageCreator::tileColoringImage(int rows, int colu
             painter.drawLine(1, 0, fragment.width(), 0);
         // bottom
         if(row < rows - 1)
-            painter.drawLine(1, fragment.height() + 1, fragment.width(), fragment.height() + 1);
+            painter.drawLine(1, fragment.height() + 1, fragment.width(),
+                             fragment.height() + 1);
         // left
         if(column > 0)
             painter.drawLine(0, 1, 0, fragment.height());
         // right
         if(column < columns - 1)
-            painter.drawLine(fragment.width() + 1, 1, fragment.width() + 1, fragment.height());
+            painter.drawLine(fragment.width() + 1, 1, fragment.width() + 1,
+                             fragment.height());
         QString name = rowChar + '-' + QString::number(column + 1);
         tiles.push_back({tile, name});
       }
@@ -218,7 +231,8 @@ void ImageCreator::_createLegend(const QMap<QString, int> &colorsMap)
     const int labelItemSize = 24;
     const int columnsCount = 4;
     int rowsCount = (colorsMap.size() - 1) / columnsCount + 1;
-    int legendWidth = margins * 2 + columnsCount * (itemSize + spacing) - spacing;
+    int legendWidth = margins * 2 + columnsCount *
+                      (itemSize + spacing) - spacing;
     int legendHeight = margins * 2 + rowsCount * (itemSize + spacing) - spacing;
     m_legend = QImage(legendWidth, legendHeight, QImage::Format_BGR888);
     m_legend.fill(Qt::white);
@@ -257,7 +271,8 @@ void ImageCreator::_drawNumber(int x, int y, uint8_t number, QPainter& painter)
     }
 }
 
-QColor ImageCreator::_generateNonExistingColor(const QList<QString> &existingColorsNames)
+QColor ImageCreator::_generateNonExistingColor(const QList<QString>&
+                                               existingColorsNames)
 {
     QColor newColor;
     while(true)
@@ -426,5 +441,4 @@ void ImageCreator::_makeDigits()
     m_digits[9].setPixelColor(1, 6, fontColor);
     m_digits[9].setPixelColor(4, 5, fontColor);
     m_digits[9].setPixelColor(4, 6, fontColor);
-
 }

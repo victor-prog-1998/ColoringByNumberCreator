@@ -10,8 +10,10 @@ class ConfigManager : public QObject
 public:
     explicit ConfigManager(QObject *parent = nullptr);
     Q_INVOKABLE void setConfigs(bool simplify, const QString& coloringColor);
-    Q_INVOKABLE bool simplify() const {return m_configsJson["Simplify"].toBool();}
-    Q_INVOKABLE QString coloringColor() const {return  m_configsJson["ColoringColor"].toString();}
+    Q_INVOKABLE bool simplify() const
+        {return m_configsJson["Simplify"].toBool();}
+    Q_INVOKABLE QString coloringColor() const
+        {return  m_configsJson["ColoringColor"].toString();}
 
 private:
     void _init();

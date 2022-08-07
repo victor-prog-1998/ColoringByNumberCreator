@@ -10,12 +10,17 @@ class ImageCreator
 {
 public:
     ImageCreator();
-    void createImages(const QImage& posterized, const QList<Area>& areas, const QMap<QString, int>& colorsMap);
-    void createSimplifiedImages(const QImage& posterized, const QList<Area>& areas, const QMap<QString, int>& colorsMap);
+    void createImages(const QImage& posterized,
+                      const QList<DataTypes::Area>& areas,
+                      const QMap<QString, int>& colorsMap);
+    void createSimplifiedImages(const QImage& posterized,
+                                const QList<DataTypes::Area>& areas,
+                                const QMap<QString, int>& colorsMap);
     const QImage& getColoringImage() const {return m_coloringImage;}
     const QImage& getPaintedImage() const {return m_paintedImage;}
     const QImage& getLegendImage() const {return m_legend;}
-    QList<QPair<QImage, QString>> tileColoringImage(int rows, int columns) const;
+    QList<QPair<QImage, QString>> tileColoringImage(int rows,
+                                                    int columns) const;
     void setColoringColor(const QColor& color);
 
 private:
