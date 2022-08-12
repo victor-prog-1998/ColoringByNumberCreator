@@ -35,19 +35,15 @@ Window {
         modeComboBox.onActivated: { // выбрано пользователем
             switch(index)
             {
-            case 0:
+            case pageHeader.modeComboBoxOriginalIndex:
                 imageArea.source = root.imageOriginalSource;
                 break;
-            case 1:
+            case pageHeader.modeComboBoxPosterizedlIndex:
                 imageArea.source = root.posterizedImageSource;
                 break;
-            case 2:
-                imageProcessor.edges();
-                imageArea.source = root.edgesImageSource;
-                break;
-            case 3:
+            case pageHeader.modeComboBoxColoringIndex:
                 imageProcessor.coloring();
-                coloringComboBox.currentIndex = 0;
+                coloringComboBox.currentIndex = pageHeader.coloringComboBoxColoringIndex;
                 imageArea.source = root.coloringImageSource;
             }
         }
@@ -55,13 +51,13 @@ Window {
         coloringComboBox.onActivated: {
             switch(index)
             {
-            case 0:
+            case pageHeader.coloringComboBoxColoringIndex:
                 imageArea.source = root.coloringImageSource;
                 break;
-            case 1:
+            case pageHeader.coloringComboBoxPaintedIndex:
                 imageArea.source = root.paintedImageSource;
                 break;
-            case 2:
+            case pageHeader.coloringComboBoxLegendIndex:
                 imageArea.source = root.legendImageSource;
                 break;
             }
@@ -106,13 +102,12 @@ Window {
                 visible: false
                 onPosterizeButtonClicked: {
                     imageProcessor.setColors(paletteSidePanel.getColors())
-                    footerText.text = "Идет постеризация ..." // не работает
                     imageProcessor.posterize();
                     footerText.text = ""
                     imageArea.source = "";
                     imageArea.source = root.posterizedImageSource
                     root.posterized = true;
-                    pageHeader.modeComboBox.currentIndex = 1; // постеризация
+                    pageHeader.modeComboBox.currentIndex = pageHeader.modeComboBoxPosterizedlIndex;
                 }
             }
 
@@ -197,7 +192,7 @@ Window {
             {
                 root.imageOriginalSource = imageArea.source = fileUrl
                 paletteSidePanel.open();
-                pageHeader.modeComboBox.currentIndex = 0; // оригинал
+                pageHeader.modeComboBox.currentIndex = pageHeader.modeComboBoxOriginalIndex;
                 pageHeader.paletteButton.visible = true;
                 root.posterized = false;
                 footerText.text = "Задайте палитру и постеризуйте изображение"

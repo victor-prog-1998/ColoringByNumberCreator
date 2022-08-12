@@ -8,6 +8,12 @@ Rectangle{
     property bool changeColorMode: false
     property bool pencilMode: false
     property bool fillMode: false
+    property int modeComboBoxOriginalIndex: 0
+    property int modeComboBoxPosterizedlIndex: 1
+    property int modeComboBoxColoringIndex: 2
+    property int coloringComboBoxColoringIndex: 0
+    property int coloringComboBoxPaintedIndex: 1
+    property int coloringComboBoxLegendIndex: 2
     signal openButtonClicked()
     signal saveButtonClicked()
     signal edgesButtonClicked()
@@ -85,7 +91,7 @@ Rectangle{
             source: "qrc:/icons/save-icon.png"
             toolTipText: "Сохранить"
             onClicked: root.saveButtonClicked()
-            visible: modeComboBox.currentIndex == 3
+            visible: modeComboBox.currentIndex == root.modeComboBoxColoringIndex
         }
 
         ImageButton{
@@ -98,7 +104,7 @@ Rectangle{
 
         ComboBox{
             id: modeComboBox
-            model: ["Оригинал", "Постеризация","Края","Раскраска"]
+            model: ["Оригинал", "Постеризация", "Раскраска"]
             height: 48
         }
 
@@ -107,14 +113,14 @@ Rectangle{
             source: root.changeColorMode ? "qrc:/icons/cancel-change-color-icon.png" : "qrc:/icons/change-color-icon.png"
             onClicked: root.changeColorMode = !root.changeColorMode
             toolTipText: root.changeColorMode ? "Отмена" : "Замена цвета"
-            visible: modeComboBox.currentIndex == 1
+            visible: modeComboBox.currentIndex == root.modeComboBoxPosterizedlIndex
         }
 
         ImageButton{
             id: fillButton
             source: "qrc:/icons/fill-icon.png"
             toolTipText: "Залить"
-            visible: modeComboBox.currentIndex == 1
+            visible: modeComboBox.currentIndex == root.modeComboBoxPosterizedlIndex
             onClicked: root.fillMode = true;
         }
 
@@ -122,13 +128,13 @@ Rectangle{
             id: pencilButton
             source: "qrc:/icons/pencil-icon.png"
             toolTipText: "Карандаш"
-            visible: modeComboBox.currentIndex == 1
+            visible: modeComboBox.currentIndex == root.modeComboBoxPosterizedlIndex
             onClicked: root.pencilMode = true
         }
 
         ComboBox{
             id: coloringComboBox
-            visible: modeComboBox.currentIndex == 3
+            visible: modeComboBox.currentIndex == root.modeComboBoxColoringIndex
             model: ["Раскраска по номерам", "Готовое изображение", "Легенда"]
             height: 48
             width: 200
