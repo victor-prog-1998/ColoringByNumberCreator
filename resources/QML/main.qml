@@ -251,6 +251,7 @@ Window {
                     saveSettings();
                     imageProcessor.removeColoringFromProvider();
                     settingsDialog.close();
+                    applySettings();
                 }
             }
         }
@@ -344,7 +345,6 @@ Window {
     }
 
     ColorDialog{
-
         id: changeColorDialog
         title: "Укажите новый цвет"
         onAccepted: {
@@ -373,4 +373,13 @@ Window {
         configManager.setConfigs(simplify, coloringColor);
     }
 
+    function applySettings()
+    {
+        if(pageHeader.modeComboBox.currentIndex == pageHeader.modeComboBoxColoringIndex)
+        {
+            imageProcessor.coloring();
+            imageArea.source = "";
+            imageArea.source = root.coloringImageSource;
+        }
+    }
 }
