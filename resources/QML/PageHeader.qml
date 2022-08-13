@@ -19,6 +19,7 @@ Rectangle{
     signal edgesButtonClicked()
     signal paletteButtonClicked()
     signal settingsButtonClicked()
+    signal changeColorButtonClicked()
 
     property alias modeComboBox: modeComboBox
     property alias paletteButton: paletteButton
@@ -37,6 +38,7 @@ Rectangle{
                     modeComboBox.enabled = pencilButton.enabled =
                     fillButton.enabled = true;
         }
+        changeColorButtonClicked();
     }
 
     onFillModeChanged: {

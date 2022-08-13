@@ -63,6 +63,11 @@ Window {
             }
         }
 
+        onChangeColorButtonClicked: {
+            footerText.text = changeColorMode ?
+                        "Укажите точку с цветом, который хотите заменить" : ""
+        }
+
         onPaletteButtonClicked: {
             paletteSidePanel.open();
         }
@@ -72,14 +77,20 @@ Window {
             {
                 paletteSidePanel.close()
                 colorSidePanel.open();
+                footerText.text = "Укажите пиксель, которому хотите задать выбранный цвет"
             }
+            else
+                footerText.text = ""
         }
         onFillModeChanged: {
             if(fillMode)
             {
                 paletteSidePanel.close()
                 colorSidePanel.open();
+                footerText.text = "Укажите область, которую хотите залить выбранным цветом"
             }
+            else
+                footerText.text = ""
         }
     }
     Item{
@@ -229,7 +240,7 @@ Window {
                 anchors.right: parent.right
                 spacing: 5
                 Label{
-                    text: "Цвет раскраски"
+                    text: "Цвет контуров и цифр"
                     font.pointSize: 12
                 }
                 ColorSelector{
@@ -296,7 +307,7 @@ Window {
                         onClicked: saveFileDialog.open()
                     }
                 }
-                CheckBox{
+                CustomCheckBox{
                     id: tileCheckBox
                     text: "Нарезка"
                 }
