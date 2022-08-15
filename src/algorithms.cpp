@@ -2,6 +2,7 @@
 #include "math.h"
 #include <QDebug>
 #include <QQueue>
+#include <QDateTime>
 
 namespace Algorithms
 {
@@ -510,4 +511,156 @@ QPoint findTextPosition(const DataTypes::PointsMatrix &matrix,
       }
     return QPoint{-1, -1};
 }
+
+QColor generateNonExistingColor(const QList<QString>& existingColorsNames)
+{
+    QColor newColor;
+    while(true)
+    {
+        // Генерируем цвет, не являющийся черно-белым
+        int r = qrand() % 85;         // [0   -  84]
+        int g = 85 + qrand() % 85;    // [85  - 169]
+        int b = 170 + qrand() % 85;   // [170 - 254]
+        newColor.setRgb(r, g, b);
+
+        bool exists = false;
+        for(const auto& colorName: existingColorsNames)
+        {
+            QColor color(colorName);
+            if(newColor == color)
+            {
+                exists = true;
+                break;
+            }
+        }
+        if(!exists)
+            break;
+    }
+    return newColor;
+}
+
+int getCountOfDigits(int number)
+{
+    int count = 1;
+    while(number >= 10)
+    {
+        number /= 10;
+        ++count;
+    }
+    return count;
+}
+
+QImage makeEdgesImage(const QImage &posterized)
+{
+    // нахождение краёв
+    QImage edgesImage(posterized.size(), QImage::Format_RGB888);
+    edgesImage.fill(Qt::white);
+    for(int y = 0; y < posterized.height() - 1; ++y)
+      for(int x = 0; x < posterized.width() - 1; ++x)
+      {
+        QColor current = posterized.pixelColor(x, y);
+        QColor right = posterized.pixelColor(x + 1, y);
+        QColor bottom = posterized.pixelColor(x, y + 1);
+        if(current != right || current != bottom)
+        {
+            edgesImage.setPixelColor(x, y, Qt::black);
+        }
+      }
+
+
+    // рамка
+    for(int x = 0; x < edgesImage.width(); ++x)
+    {
+      edgesImage.setPixelColor(x, 0, Qt::black);
+      edgesImage.setPixelColor(x, edgesImage.height() - 1, Qt::black);
+    }
+    for(int y = 1; y < edgesImage.height() - 1; ++y)
+    {
+      edgesImage.setPixelColor(0, y, Qt::black);
+      edgesImage.setPixelColor(edgesImage.width() - 1, y, Qt::black);
+    }
+    return edgesImage;
+}
+
+void changeColor(QImage &image, int x, int y, const QColor &color)
+{
+    QColor srcColor = image.pixelColor(x, y);
+    for(int y = 0; y < image.height(); ++y)
+      for(int x = 0; x < image.width(); ++x)
+        if(image.pixelColor(x, y) == srcColor)
+            image.setPixelColor(x, y, color);
+}
+
+QStringList findOptimalPalette(const QImage &image, int colorsCount)
+{
+    QStringList palette;
+
+    QQueue<QList<QColor>> pixelsQueue;
+    pixelsQueue.enqueue(Algorithms::getImagePixels(image));
+
+    QList<QList<QColor>> colorsList;
+    int count = colorsCount;
+    while(pixelsQueue.size() < count)
+    {
+      int queueSize = pixelsQueue.size();
+      for(int i = 0; i < queueSize; ++i)
+      {
+        auto forSplit = pixelsQueue.dequeue();  // извлекаем из очереди
+        auto splitted = Algorithms::splitPixels(forSplit); // разбиваем
+        // не разбивается => записываем в список и больше не рассматриваем
+        if(splitted.first.isEmpty() || splitted.second.isEmpty())
+        {
+          colorsList << forSplit;
+          --count; // так как в очереди будет меньше элементов
+        }
+        else
+        {
+          // добавляем в конец очереди оба => стало на 1 больше, чем до извлечения
+          pixelsQueue.enqueue(splitted.first);
+          pixelsQueue.enqueue(splitted.second);
+          if(pixelsQueue.size() == count)
+            break;
+        }
+      }
+    }
+
+    while(!pixelsQueue.isEmpty())
+      colorsList << pixelsQueue.dequeue();
+
+    for(const auto& colors: colorsList)
+    {
+        QColor paletteColor = Algorithms::averageColor(colors);
+        palette << paletteColor.name(QColor::HexRgb);
+    }
+
+    return palette;
+}
+
+void findAreas(const QImage &posterized, const QImage &edges,
+               QList<DataTypes::Area> &areas, QMap<QString, int> &colorsMap)
+{
+    QImage edgesCopy(edges);
+    for(int y = 0; y < edgesCopy.height(); ++y)
+      for(int x = 0; x < edgesCopy.width(); ++x)
+      {
+        QColor pixColor = edgesCopy.pixelColor(x, y);
+        if(pixColor == Qt::white)
+        {
+          QColor posterizedColor = posterized.pixelColor(x, y);
+          QString colorName = posterizedColor.name(QColor::HexRgb);
+          if(!colorsMap.contains(colorName))
+          {
+            int id = colorsMap.size();
+            colorsMap[colorName] = id;
+          }
+          QList<QPoint> filledPixels;
+          Algorithms::fill(x, y, edgesCopy, Qt::green, &filledPixels);
+          auto contourPixels{Algorithms::findContour(edgesCopy, filledPixels)};
+          DataTypes::Area area{contourPixels, filledPixels,
+                               colorsMap[colorName]};
+          areas << area;
+        }
+      }
+}
+
 }

@@ -13,7 +13,7 @@ void ImageCreator::createSimplifiedImages(const QImage &posterized,
                                           const QMap<QString, int> &colorsMap)
 {
     // Цвет, которого нет в наборе, которым предварительно будет залито готовое изображение
-    QColor tmpColor = _generateNonExistingColor(colorsMap.keys());
+    QColor tmpColor = Algorithms::generateNonExistingColor(colorsMap.keys());
     _createLegend(colorsMap);
     m_coloringImage = QImage(posterized.size(), QImage::Format_RGB888);
     m_coloringImage.fill(Qt::white);
@@ -83,7 +83,7 @@ void ImageCreator::createImages(const QImage &posterized,
                                 const QMap<QString, int> &colorsMap)
 {
     // Цвет, которого нет в наборе, которым предварительно будет залито готовое изображение
-    QColor tmpColor = _generateNonExistingColor(colorsMap.keys());
+    QColor tmpColor = Algorithms::generateNonExistingColor(colorsMap.keys());
     _createLegend(colorsMap);
     m_coloringImage = QImage(posterized.size(), QImage::Format_RGB888);
     m_coloringImage.fill(Qt::white);
@@ -202,19 +202,8 @@ void ImageCreator::setColoringColor(const QColor &color)
 
 int ImageCreator::_getNumberTextWidth(int number)
 {
-    int count = _getCountOfDigits(number);
+    int count = Algorithms::getCountOfDigits(number);
     return count * (m_digitWidth + m_numberTextSpacing) - m_numberTextSpacing;
-}
-
-int ImageCreator::_getCountOfDigits(int number)
-{
-    int count = 1;
-    while(number >= 10)
-    {
-        number /= 10;
-        ++count;
-    }
-    return count;
 }
 
 void ImageCreator::_drawContour(QImage &image, const QList<QPoint> &points)
@@ -260,7 +249,7 @@ void ImageCreator::_createLegend(const QMap<QString, int> &colorsMap)
 
 void ImageCreator::_drawNumber(int x, int y, uint8_t number, QPainter& painter)
 {
-    int count = _getCountOfDigits(number);
+    int count = Algorithms::getCountOfDigits(number);
     x += (m_digitWidth + m_numberTextSpacing) * (count - 1);
     for(int i = 0; i < count; ++i)
     {
@@ -271,33 +260,7 @@ void ImageCreator::_drawNumber(int x, int y, uint8_t number, QPainter& painter)
     }
 }
 
-QColor ImageCreator::_generateNonExistingColor(const QList<QString>&
-                                               existingColorsNames)
-{
-    QColor newColor;
-    while(true)
-    {
-        // Генерируем цвет, не являющийся черно-белым
-        int r = qrand() % 85;         // [0   -  84]
-        int g = 85 + qrand() % 85;    // [85  - 169]
-        int b = 170 + qrand() % 85;   // [170 - 254]
-        newColor.setRgb(r, g, b);
 
-        bool exists = false;
-        for(const auto& colorName: existingColorsNames)
-        {
-            QColor color(colorName);
-            if(newColor == color)
-            {
-                exists = true;
-                break;
-            }
-        }
-        if(!exists)
-            break;
-    }
-    return newColor;
-}
 
 void ImageCreator::_makeDigits()
 {

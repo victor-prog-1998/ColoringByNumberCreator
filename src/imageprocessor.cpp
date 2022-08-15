@@ -9,7 +9,6 @@
 
 ImageProcessor::ImageProcessor(QObject *parent) : QObject(parent)
 {
-
 }
 
 void ImageProcessor::posterize()
@@ -49,9 +48,7 @@ void ImageProcessor::setColors(const QStringList &colors)
     if(!m_colors.isEmpty())
         m_colors.clear();
     for(auto &color: colors)
-    {
         m_colors.push_back(QColor(color));
-    }
 }
 
 QStringList ImageProcessor::findOptimalPalette(int colorsCount)
@@ -61,74 +58,14 @@ QStringList ImageProcessor::findOptimalPalette(int colorsCount)
         qDebug() << "Изображение не задано";
         return QStringList();
     }
-
-//    auto uniqueColors = _getUniqueColors();
-//    if(uniqueColors.size() <= colorsCount)
-//    {
-//      QStringList result;
-//      for(const auto& col: uniqueColors)
-//        result << col.name(QColor::HexRgb);
-//      return result;
-//    }
-
-
-    QQueue<QList<QColor>> pixelsQueue;
-    pixelsQueue.enqueue(Algorithms::getImagePixels(m_currentImage));
-
-    QList<QList<QColor>> colorsList;
-    int count = colorsCount;
-    while(pixelsQueue.size() < count)
-    {
-      int queueSize = pixelsQueue.size();
-      for(int i = 0; i < queueSize; ++i)
-      {
-        auto forSplit = pixelsQueue.dequeue();  // извлекаем из очереди
-        auto splitted = Algorithms::splitPixels(forSplit); // разбиваем
-        if(splitted.first.isEmpty() || splitted.second.isEmpty()) // не разбивается => записываем в список и больше не рассматриваем
-        {
-          colorsList << forSplit;
-          --count; // так как в очереди будет меньше элементов
-        }
-        else
-        {
-          pixelsQueue.enqueue(splitted.first); // добавляем в конец очереди оба => стало на 1 больше, чем до извлечения
-          pixelsQueue.enqueue(splitted.second);
-          if(pixelsQueue.size() == count)
-            break;
-        }
-      }
-    }
-
-    while(!pixelsQueue.isEmpty())
-      colorsList << pixelsQueue.dequeue();
-
-//    auto it = pixelsQueue.begin();
-//    while(it != pixelsQueue.end())
-//    {
-//        if(it->size() == 0)
-//            it = pixelsQueue.erase(it);
-//        else ++it;
-//    }
-
-    QStringList result;
-
-    for(const auto& colors: colorsList)
-    {
-        QColor paletteColor = Algorithms::averageColor(colors);
-        result << paletteColor.name(QColor::HexRgb);
-    }
-
-    return result;
+    auto palette = Algorithms::findOptimalPalette(m_currentImage, colorsCount);
+    return palette;
 }
 
 void ImageProcessor::changeColor(int x, int y, const QColor &color)
 {
     QImage img = m_imageProvider->get("posterized");
-    QColor srcColor = img.pixelColor(x, y);
-    for(int y = 0; y < img.height(); ++y)
-      for(int x = 0; x < img.width(); ++x)
-        if(img.pixelColor(x, y) == srcColor)
-          img.setPixelColor(x, y, color);
+    Algorithms::changeColor(img, x, y, color);
     m_imageProvider->add("posterized", img);
 }
 
@@ -151,35 +88,7 @@ void ImageProcessor::edges()
     if(m_imageProvider->contains("edges"))
         return;
     QImage posterized = m_imageProvider->get("posterized");
-
-    // нахождение краёв
-    QImage edgesImage(posterized.size(), QImage::Format_RGB888);
-    edgesImage.fill(Qt::white);
-    for(int y = 0; y < posterized.height() - 1; ++y)
-      for(int x = 0; x < posterized.width() - 1; ++x)
-      {
-        QColor current = posterized.pixelColor(x, y);
-        QColor right = posterized.pixelColor(x + 1, y);
-        QColor bottom = posterized.pixelColor(x, y + 1);
-        if(current != right || current != bottom)
-        {
-            edgesImage.setPixelColor(x, y, Qt::black);
-        }
-      }
-
-
-    // рамка
-    for(int x = 0; x < edgesImage.width(); ++x)
-    {
-      edgesImage.setPixelColor(x, 0, Qt::black);
-      edgesImage.setPixelColor(x, edgesImage.height() - 1, Qt::black);
-    }
-    for(int y = 1; y < edgesImage.height() - 1; ++y)
-    {
-      edgesImage.setPixelColor(0, y, Qt::black);
-      edgesImage.setPixelColor(edgesImage.width() - 1, y, Qt::black);
-    }
-
+    QImage edgesImage = Algorithms::makeEdgesImage(posterized);
     m_imageProvider->add("edges", edgesImage);
 }
 
@@ -193,29 +102,7 @@ void ImageProcessor::coloring()
 
     QMap<QString, int> colorsMap; // color -> id
     QList<DataTypes::Area> areas;
-
-    for(int y = 0; y < edgesImage.height(); ++y)
-      for(int x = 0; x < edgesImage.width(); ++x)
-      {
-        QColor pixColor = edgesImage.pixelColor(x, y);
-        if(pixColor == Qt::white)
-        {
-          QColor posterizedColor = posterizedImage.pixelColor(x, y);
-          QString colorName = posterizedColor.name(QColor::HexRgb);
-          if(!colorsMap.contains(colorName))
-          {
-            int id = colorsMap.size();
-            colorsMap[colorName] = id;
-          }
-          QList<QPoint> filledPixels;
-          Algorithms::fill(x, y, edgesImage, Qt::green, &filledPixels);
-          auto contourPixels{Algorithms::findContour(edgesImage, filledPixels)};
-          DataTypes::Area area{contourPixels, filledPixels,
-                               colorsMap[colorName]};
-          areas << area;
-          QString str;
-        }
-      }
+    Algorithms::findAreas(posterizedImage, edgesImage, areas, colorsMap);
 
     QColor coloringColor{m_configManager->coloringColor()};
     m_imageCreator.setColoringColor(coloringColor);
@@ -255,7 +142,8 @@ void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
     QImage coloring = m_imageProvider->get("coloring");
     QImage painted = m_imageProvider->get("painted");
     QImage legend = m_imageProvider->get("legend");
-    QString folderName = _generateSaveFolderName();
+    QString folderName = "Coloring_";
+    folderName += QDateTime::currentDateTime().toString("dd-MMMM-yy_hh-mm-ss");
     QDir dir(path);
     dir.mkdir(folderName);
     path += folderName + '/';
@@ -276,9 +164,3 @@ void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
     }
 }
 
-QString ImageProcessor::_generateSaveFolderName()
-{
-    QDateTime dateTime = QDateTime::currentDateTime();
-    QString suffix = dateTime.toString("dd-MMMM-yy_hh-mm-ss");
-    return "Coloring_" + suffix;
-}
