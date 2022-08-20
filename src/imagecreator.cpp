@@ -233,7 +233,7 @@ void ImageCreator::_createLegend(const QMap<QString, int> &colorsMap)
     for(const auto& colorName: colorsMap.keys())
     {
         int id = colorsMap[colorName];
-        int index = id;
+        int index = id - 1;
         int row = index / columnsCount;
         int column = index % columnsCount;
         int x = margins + column * (itemSize + spacing);

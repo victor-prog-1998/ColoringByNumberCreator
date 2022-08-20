@@ -650,7 +650,7 @@ void findAreas(const QImage &posterized, const QImage &edges,
           QString colorName = posterizedColor.name(QColor::HexRgb);
           if(!colorsMap.contains(colorName))
           {
-            int id = colorsMap.size();
+            int id = colorsMap.size() + 1;
             colorsMap[colorName] = id;
           }
           QList<QPoint> filledPixels;
