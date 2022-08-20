@@ -663,4 +663,106 @@ void findAreas(const QImage &posterized, const QImage &edges,
       }
 }
 
+QImage scaleImage2x(const QImage &image, int iterations)
+{
+    QImage srcImage(image);
+    for(int it = 0; it < iterations; ++it)
+    {
+        QImage tmpImage = srcImage.scaled(srcImage.width() * 2,
+                                          srcImage.height() * 2);
+
+        int bottomY = srcImage.height() - 1;
+        int rightX = srcImage.width() - 1;
+
+        for(int x = 1; x < rightX; ++x)
+          for(int y = 1; y < bottomY; ++y)
+          {
+            QColor c1, c2, c3, c4, a, b, c, d;
+            c1 = c2 = c3 = c4 = srcImage.pixelColor(x, y);
+            a = srcImage.pixelColor(x, y - 1);
+            b = srcImage.pixelColor(x + 1, y);
+            c = srcImage.pixelColor(x - 1, y);
+            d = srcImage.pixelColor(x, y + 1);
+
+            if(c==a && c!=d && a!=b) c1 = a;
+            if(a==b && a!=c && b!=d) c2 = b;
+            if(d==c && d!=b && c!=a) c3 = c;
+            if(b==d && b!=a && d!=c) c4 = d;
+
+            int pixX = x * 2;
+            int pixY = y * 2;
+
+            tmpImage.setPixelColor(pixX,     pixY,     c1);
+            tmpImage.setPixelColor(pixX + 1, pixY,     c2);
+            tmpImage.setPixelColor(pixX,     pixY + 1, c3);
+            tmpImage.setPixelColor(pixX + 1, pixY + 1, c4);
+          }
+
+        srcImage = tmpImage;
+    }
+
+    return srcImage;
+}
+
+QImage scaleImage3x(const QImage &image, int iterations)
+{
+    QImage srcImage(image);
+    for(int it = 0; it < iterations; ++it)
+    {
+        QImage tmpImage = srcImage.scaled(srcImage.width() * 3,
+                                          srcImage.height() * 3);
+
+        int bottomY = srcImage.height() - 1;
+        int rightX = srcImage.width() - 1;
+
+        for(int x = 1; x < rightX; ++x)
+          for(int y = 1; y < bottomY; ++y)
+          {
+            QColor c1, c2, c3, c4, c5, c6, c7, c8, c9;
+            QColor a, b, c, d, e, f, g, h, i;
+            c1 = c2 = c3 = c4 = c5 = c6 = c7 = c8 = c9 = e =
+                    srcImage.pixelColor(x, y);
+
+            a = srcImage.pixelColor(x - 1, y - 1);
+            b = srcImage.pixelColor(x   ,  y - 1);
+            c = srcImage.pixelColor(x + 1, y - 1);
+            d = srcImage.pixelColor(x - 1, y);
+            f = srcImage.pixelColor(x + 1, y);
+            g = srcImage.pixelColor(x - 1, y + 1);
+            h = srcImage.pixelColor(x   ,  y + 1);
+            i = srcImage.pixelColor(x + 1, y + 1);
+
+            if(d==b && d!=h && b!=f) c1=d;
+            if((d==b && d!=h && b!=f && e!=c) ||
+                    (b==f && b!=d && f!=h && e!=a)) c2=b;
+            if(b==f && b!=d && f!=h) c3=f;
+            if((h==d && h!=f && d!=b && e!=a) ||
+                    (d==b && d!=h && b!=f && e!=g)) c4=d;
+            if((b==f && b!=d && f!=h && e!=i) ||
+                    (f==h && f!=b && h!=d && e!=c)) c6=f;
+            if(h==d && h!=f && d!=b) c7=d;
+            if((f==h && f!=b && h!=d && e!=g) ||
+                    (h==d && h!=f && d!=b && e!=i)) c8=h;
+            if(f==h && f!=b && h!=d) c9=f;
+
+            int pixX = x * 3;
+            int pixY = y * 3;
+
+            tmpImage.setPixelColor(pixX,     pixY,     c1);
+            tmpImage.setPixelColor(pixX + 1, pixY,     c2);
+            tmpImage.setPixelColor(pixX + 2, pixY,     c3);
+            tmpImage.setPixelColor(pixX,     pixY + 1, c4);
+            tmpImage.setPixelColor(pixX + 1, pixY + 1, c5);
+            tmpImage.setPixelColor(pixX + 2, pixY + 1, c6);
+            tmpImage.setPixelColor(pixX,     pixY + 2, c7);
+            tmpImage.setPixelColor(pixX + 1, pixY + 2, c8);
+            tmpImage.setPixelColor(pixX + 2, pixY + 2, c9);
+          }
+
+        srcImage = tmpImage;
+    }
+
+    return srcImage;
+}
+
 }

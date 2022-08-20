@@ -7,10 +7,12 @@ ConfigManager::ConfigManager(QObject *parent) : QObject(parent)
     _init();
 }
 
-void ConfigManager::setConfigs(bool simplify, const QString &coloringColor)
+void ConfigManager::setConfigs(bool simplify, const QString &coloringColor,
+                               int scalingFactor)
 {
     m_configsJson["Simplify"] = simplify;
     m_configsJson["ColoringColor"] = coloringColor;
+    m_configsJson["ScalingFactor"] = scalingFactor;
     _writeConfigsToFile();
 }
 
@@ -26,9 +28,7 @@ void ConfigManager::_writeConfigsToFile()
 {
     QFile configsFile(m_fileName);
     configsFile.open(QIODevice::WriteOnly);
-
     configsFile.write(QJsonDocument(m_configsJson).toJson());
-
     configsFile.close();
 }
 

@@ -113,6 +113,12 @@ public:
      */
     Q_INVOKABLE void saveResults(const QString& folderPath,
                                  int tileRows = 0, int tileColumns = 0);
+
+private:
+    /*!
+     * \brief Масштабирует постеризованное изображение и записывает в провайдер
+     */
+    void scalePosterizedImage();
 private:
     //!< Текущее изображение
     QImage m_currentImage;

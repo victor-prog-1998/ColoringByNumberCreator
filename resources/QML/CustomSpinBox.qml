@@ -9,6 +9,15 @@ Rectangle{
     property int value: 0
     property int minimum: 0
     property int maximum: 100
+    property bool fixedValues: false
+    property int fixedIndex: 0
+    property var values: []
+
+    onFixedValuesChanged: {
+        fixedIndex = 0;
+        value = values[fixedIndex]
+    }
+
     Text{
         anchors.centerIn: parent
         font.pointSize: 12
@@ -24,8 +33,19 @@ Rectangle{
         text: "-"
         textColor: "white"
         onClicked: {
-            if(root.value > root.minimum)
+            if(root.fixedValues)
+            {
+                if(root.fixedIndex > 0)
+                {
+                    --root.fixedIndex;
+                    root.value = root.values[fixedIndex]
+                }
+            }
+
+            else if(root.value > root.minimum)
+            {
                 --root.value;
+            }
         }
     }
     CustomButton{
@@ -38,8 +58,19 @@ Rectangle{
         text: "+"
         textColor: "white"
         onClicked: {
-            if(root.value < root.maximum)
+            if(root.fixedValues)
+            {
+                if(root.fixedIndex < root.values.length - 1)
+                {
+                    ++root.fixedIndex;
+                    root.value = root.values[fixedIndex]
+                }
+            }
+
+            else if(root.value < root.maximum)
+            {
                 ++root.value;
+            }
         }
     }
 

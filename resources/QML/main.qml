@@ -229,8 +229,8 @@ Window {
     Dialog{
         id: settingsDialog
         title: "Настройки"
-        width: 300
-        height: 200
+        width: 420
+        height: 300
         contentItem: Item {
             anchors.fill: parent
             anchors.margins: 10
@@ -249,6 +249,31 @@ Window {
                 CustomCheckBox{
                     text: "Высокая детализация"
                     id: highDetailizationCheckBox
+                }
+                CustomCheckBox{
+                    text: "Масштабирование раскраски"
+                    id: scalingCheckBox
+                }
+                Text{
+                    font.pixelSize: 10
+                    visible: scalingCheckBox.checked
+                    text: "Масштабирование позоляет увеличить конутура,\n" +
+                          "сделать их более гладкими и вместить больше числовых меток"
+                }
+
+                Row{
+                    visible: scalingCheckBox.checked
+                    width: parent.width
+                    spacing: 5
+                    Text{
+                        font.pointSize: 12
+                        text: "Коэффициент"
+                    }
+                    CustomSpinBox{
+                        id: scalingSpinBox
+                        fixedValues: true
+                        values: [2, 3, 4, 6, 8, 9, 12]
+                    }
                 }
             }
             CustomButton{
@@ -373,6 +398,21 @@ Window {
     {
         let simplify = configManager.simplify();
         let coloringColor = configManager.coloringColor();
+        let scalingFactor = configManager.scalingFactor();
+        if(scalingFactor > 1)
+        {
+            scalingCheckBox.checked = true;
+            scalingSpinBox.value = scalingFactor;
+            for(var i = 0; i < scalingSpinBox.values.length; ++i)
+                if(scalingSpinBox.values[i] === scalingFactor)
+                {
+                    scalingSpinBox.fixedIndex = i;
+                    break;
+                }
+        }
+        else
+            scalingCheckBox.checked = false;
+
         settingsColorSelector.setCurrentColor(coloringColor);
         highDetailizationCheckBox.checked = !simplify;
     }
@@ -381,7 +421,8 @@ Window {
     {
         let simplify = !highDetailizationCheckBox.checked;
         let coloringColor = settingsColorSelector.getCurrentColor();
-        configManager.setConfigs(simplify, coloringColor);
+        let scalingFactor = scalingCheckBox.checked ? scalingSpinBox.value : 1
+        configManager.setConfigs(simplify, coloringColor, scalingFactor);
     }
 
     function applySettings()
@@ -391,6 +432,7 @@ Window {
             imageProcessor.coloring();
             imageArea.source = "";
             imageArea.source = root.coloringImageSource;
+            pageHeader.coloringComboBox.currentIndex = pageHeader.coloringComboBoxColoringIndex
         }
     }
 }

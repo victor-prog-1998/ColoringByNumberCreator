@@ -13,6 +13,8 @@ ImageProcessor::ImageProcessor(QObject *parent) : QObject(parent)
 
 void ImageProcessor::posterize()
 {
+    if(m_imageProvider->contains("scaled_posterized"))
+        m_imageProvider->remove("scaled_posterized");
     if(m_imageProvider->contains("edges"))
         removeEdgesFromProvider();
     if(m_imageProvider->contains("coloring"))
@@ -87,7 +89,8 @@ void ImageProcessor::edges()
 {
     if(m_imageProvider->contains("edges"))
         return;
-    QImage posterized = m_imageProvider->get("posterized");
+    QImage posterized = m_imageProvider->get("scaled_posterized");
+
     QImage edgesImage = Algorithms::makeEdgesImage(posterized);
     m_imageProvider->add("edges", edgesImage);
 }
@@ -96,8 +99,9 @@ void ImageProcessor::coloring()
 {
     if(m_imageProvider->contains("coloring"))
         return;
+    scalePosterizedImage();
     edges();
-    QImage posterizedImage{m_imageProvider->get("posterized")};
+    QImage posterizedImage{m_imageProvider->get("scaled_posterized")};
     QImage edgesImage{m_imageProvider->get("edges")};
 
     QMap<QString, int> colorsMap; // color -> id
@@ -128,6 +132,8 @@ void ImageProcessor::removeEdgesFromProvider()
 
 void ImageProcessor::removeColoringFromProvider()
 {
+    m_imageProvider->remove("scaled_posterized");
+    m_imageProvider->remove("edges");
     m_imageProvider->remove("coloring");
     m_imageProvider->remove("painted");
     m_imageProvider->remove("legend");
@@ -162,5 +168,44 @@ void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
         for(const auto& tile: tiles)
             tile.first.save(path + tile.second + ".png", "PNG");
     }
+}
+
+void ImageProcessor::scalePosterizedImage()
+{
+    if(m_imageProvider->contains("scaled_posterized"))
+        return;
+    QImage posterized = m_imageProvider->get("posterized");
+    int scalingFactor = m_configManager->scalingFactor();
+    QImage scaledPosterized;
+    switch(scalingFactor)
+    {
+    case 2:
+        scaledPosterized = Algorithms::scaleImage2x(posterized);
+        break;
+    case 3:
+        scaledPosterized = Algorithms::scaleImage3x(posterized);
+        break;
+    case 4:
+        scaledPosterized = Algorithms::scaleImage2x(posterized, 2);
+        break;
+    case 6:
+        scaledPosterized = Algorithms::scaleImage2x(posterized);
+        scaledPosterized = Algorithms::scaleImage3x(scaledPosterized);
+        break;
+    case 8:
+        scaledPosterized = Algorithms::scaleImage2x(posterized, 3);
+        break;
+    case 9:
+        scaledPosterized = Algorithms::scaleImage3x(posterized, 2);
+        break;
+    case 12:
+        scaledPosterized = Algorithms::scaleImage3x(posterized);
+        scaledPosterized = Algorithms::scaleImage2x(scaledPosterized, 2);
+        break;
+    default:
+        scaledPosterized = posterized;
+        break;
+    }
+    m_imageProvider->add("scaled_posterized", scaledPosterized);
 }
 

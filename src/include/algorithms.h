@@ -227,6 +227,24 @@ namespace Algorithms
      * \return число цифр
      */
     int getCountOfDigits(int number);
+    /*!
+     * \brief Масштабирование изображения в 2 раза
+     * \details При масштабировании происходит сглаживание без размытия.
+     *          Размер итогового изображения == 2 в степени iterations.
+     * \param[in] image - изображение
+     * \param[in] iterations - число итераций
+     * \return Масштабированное изображение
+     */
+    QImage scaleImage2x(const QImage& image, int iterations = 1);
+    /*!
+     * \brief Масштабирование изображения в 3 раза
+     * \details При масштабировании происходит сглаживание без размытия.
+     *          Размер итогового изображения == 3 в степени iterations.
+     * \param[in] image - изображение
+     * \param[in] iterations - число итераций
+     * \return Масштабированное изображение
+     */
+    QImage scaleImage3x(const QImage& image, int iterations = 1);
 };
 
 #endif // ALGORITHMS_H
