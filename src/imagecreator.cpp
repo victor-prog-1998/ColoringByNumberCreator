@@ -5,7 +5,7 @@
 
 ImageCreator::ImageCreator()
 {
-    _makeDigits();
+    _initDigits();
 }
 
 void ImageCreator::createSimplifiedImages(const QImage &posterized,
@@ -28,25 +28,30 @@ void ImageCreator::createSimplifiedImages(const QImage &posterized,
     for(const auto& area: areas)
     {
         int colorId = area.colorId;
-        int w = _getNumberTextWidth(colorId);
-        int h = m_digitHeight;
         // Получаем матрицу внутренних точек контура
         auto interiorMatrix = Algorithms::makePointsMatrix(area.interiorPoints);
-        // Находим позицию метки цвета
-        QPoint textPos = Algorithms::findTextPosition(interiorMatrix, w, h);
-        // Если удалось вписать метку цвета в контур
-        if(textPos.x() != -1)
+         //! Пытаемся вписать метку, начиная с наибольшего размера шрифта
+        for(int size = 2; size >= 0; --size)
         {
-            // Рисуем контур на раскраске
-            _drawContour(m_coloringImage, area.contourPoints);
-            // Рисуем контур на готовом изображении
-            _drawContour(m_paintedImage, area.contourPoints);
-            // Закрашиваем пиксели готового изображения текущим цветом
-            for(const auto& point: area.interiorPoints)
-                m_paintedImage.setPixelColor(point.x(), point.y(),
-                                             QColor(colorsMap.key(colorId)));
-            // Рисуем метку цвета на раскраске
-            _drawNumber(textPos.x(), textPos.y(), colorId, painter);
+            int w = _getNumberTextWidth(colorId, size);
+            int h = m_digits[size][0].height();
+            // Находим позицию метки цвета
+            QPoint textPos = Algorithms::findTextPosition(interiorMatrix, w, h);
+            // Если удалось вписать метку цвета в контур
+            if(textPos.x() != -1)
+            {
+                // Рисуем контур на раскраске
+                _drawContour(m_coloringImage, area.contourPoints);
+                // Рисуем контур на готовом изображении
+                _drawContour(m_paintedImage, area.contourPoints);
+                // Закрашиваем пиксели готового изображения текущим цветом
+                for(const auto& point: area.interiorPoints)
+                    m_paintedImage.setPixelColor(point.x(), point.y(),
+                                                 QColor(colorsMap.key(colorId)));
+                // Рисуем метку цвета на раскраске
+                _drawNumber(textPos.x(), textPos.y(), colorId, size, painter);
+                break;
+            }
         }
     }
 
@@ -62,13 +67,18 @@ void ImageCreator::createSimplifiedImages(const QImage &posterized,
           QList<QPoint> filledPixels;
           Algorithms::fill(x, y, m_paintedImage, color, &filledPixels);
           int colorId = colorsMap[color.name(QColor::HexRgb)];
-          int w = _getNumberTextWidth(colorId);
-          int h = m_digitHeight;
           auto matrix = Algorithms::makePointsMatrix(filledPixels);
-          auto textPos = Algorithms::findTextPosition(matrix, w, h);
-          if(textPos.x() != -1)
+          //! Пытаемся вписать метку, начиная с наибольшего размера шрифта
+          for(int size = 2; size >= 0; --size)
           {
-              _drawNumber(textPos.x(), textPos.y(), colorId, painter);
+              int w = _getNumberTextWidth(colorId, size);
+              int h = m_digits[size][0].height();
+              auto textPos = Algorithms::findTextPosition(matrix, w, h);
+              if(textPos.x() != -1)
+              {
+                  _drawNumber(textPos.x(), textPos.y(), colorId, size, painter);
+                  break;
+              }
           }
         }
       }
@@ -97,12 +107,8 @@ void ImageCreator::createImages(const QImage &posterized,
     for(const auto& area: areas)
     {
         int colorId = area.colorId;
-        int w = _getNumberTextWidth(colorId);
-        int h = m_digitHeight;
         // Получаем матрицу внутренних точек контура
         auto interiorMatrix = Algorithms::makePointsMatrix(area.interiorPoints);
-        // Находим позицию метки цвета
-        QPoint textPos = Algorithms::findTextPosition(interiorMatrix, w, h);
         // Рисуем контур на раскраске и на готовом изображении
         _drawContour(m_coloringImage, area.contourPoints);
         _drawContour(m_paintedImage, area.contourPoints);
@@ -110,10 +116,21 @@ void ImageCreator::createImages(const QImage &posterized,
         for(const auto& point: area.interiorPoints)
             m_paintedImage.setPixelColor(point.x(), point.y(),
                                          QColor(colorsMap.key(colorId)));
-        // Если удалось вписать метку цвета в контур, то рисуем её
-        if(textPos.x() != -1)
-            _drawNumber(textPos.x(), textPos.y(), colorId, painter);
 
+        //! Пытаемся вписать метку, начиная с наибольшего размера шрифта
+        for(int size = 2; size >= 0; --size)
+        {
+            int w = _getNumberTextWidth(colorId, size);
+            int h = m_digits[size][0].height();
+            // Находим позицию метки цвета
+            QPoint textPos = Algorithms::findTextPosition(interiorMatrix, w, h);
+            // Если удалось вписать метку цвета в контур, то рисуем её
+            if(textPos.x() != -1)
+            {
+                _drawNumber(textPos.x(), textPos.y(), colorId, size, painter);
+                break;
+            }
+        }
     }
 
     // Работа с пустыми областями (которые образовались при отрисовке раскраски)
@@ -188,22 +205,24 @@ void ImageCreator::setColoringColor(const QColor &color)
 {
     m_coloringColor = color;
     // + меняем цвета пикселей для изображений с цифрами
-    if(!m_digits[0].isNull())
+    if(!m_digits[0][0].isNull())
     {
+      for(int size = 0; size < 3; ++size)
         for(int i = 0; i < 10; ++i)
-          for(int y = 0; y < m_digits[i].height(); ++y)
-            for(int x = 0; x < m_digits[i].width(); ++x)
+          for(int y = 0; y < m_digits[size][i].height(); ++y)
+            for(int x = 0; x < m_digits[size][i].width(); ++x)
             {
-              if(m_digits[i].pixelColor(x, y) != Qt::white)
-                m_digits[i].setPixelColor(x, y, color);
+              if(m_digits[size][i].pixelColor(x, y) != Qt::white)
+                m_digits[size][i].setPixelColor(x, y, color);
             }
     }
 }
 
-int ImageCreator::_getNumberTextWidth(int number)
+int ImageCreator::_getNumberTextWidth(int number, int size)
 {
     int count = Algorithms::getCountOfDigits(number);
-    return count * (m_digitWidth + m_numberTextSpacing) - m_numberTextSpacing;
+    return count * (m_digits[size][0].width() +
+           m_numberTextSpacing) - m_numberTextSpacing;
 }
 
 void ImageCreator::_drawContour(QImage &image, const QList<QPoint> &points)
@@ -247,161 +266,34 @@ void ImageCreator::_createLegend(const QMap<QString, int> &colorsMap)
     }
 }
 
-void ImageCreator::_drawNumber(int x, int y, uint8_t number, QPainter& painter)
+void ImageCreator::_drawNumber(int x, int y, uint8_t number, int size, QPainter& painter)
 {
     int count = Algorithms::getCountOfDigits(number);
-    x += (m_digitWidth + m_numberTextSpacing) * (count - 1);
+    int width = m_digits[size][0].width();
+    x += (width + m_numberTextSpacing) * (count - 1);
     for(int i = 0; i < count; ++i)
     {
         int digitIndex = number % 10;
-        painter.drawImage(x, y, m_digits[digitIndex]);
+        painter.drawImage(x, y, m_digits[size][digitIndex]);
         number /= 10;
-        x -= (m_digitWidth + m_numberTextSpacing);
+        x -= (width + m_numberTextSpacing);
     }
 }
 
 
 
-void ImageCreator::_makeDigits()
+void ImageCreator::_initDigits()
 {
-    QColor fontColor = m_coloringColor;
+    //! Small
+    QString pathPrefix = ":/digits/small/%1.png";
     for(int i = 0; i < 10; ++i)
-    {
-        m_digits[i] = QImage(6, 9, QImage::Format_RGB888);
-        m_digits[i].fill(Qt::white);
-    }
-    /*
-     *   012345     012345     012345     012345     012345
-     *  +------+   +------+   +------+   +------+   +------+
-     * 0|      |  0|      |  0|      |  0|      |  0|      |
-     * 1|  **  |  1|   *  |  1| **** |  1| **** |  1| *  * |
-     * 2| *  * |  2|  **  |  2|    * |  2|    * |  2| *  * |
-     * 3| *  * |  3| * *  |  3|    * |  3|    * |  3| *  * |
-     * 4| *  * |  4|   *  |  4| **** |  4| **** |  4| **** |
-     * 5| *  * |  5|   *  |  5| *    |  5|    * |  5|    * |
-     * 6| *  * |  6|   *  |  6| *    |  6|    * |  6|    * |
-     * 7|  **  |  7| **** |  7| **** |  7| **** |  7|    * |
-     * 8|      |  8|      |  8|      |  8|      |  8|      |
-     *  +------+   +------+   +------+   +------+   +------+
-     *
-     *   012345     012345     012345     012345     012345
-     *  +------+   +------+   +------+   +------+   +------+
-     * 0|      |  0|      |  0|      |  0|      |  0|      |
-     * 1| **** |  1| **** |  1| **** |  1| **** |  1| **** |
-     * 2| *    |  2| *    |  2|    * |  2| *  * |  2| *  * |
-     * 3| *    |  3| *    |  3|   *  |  3| *  * |  3| *  * |
-     * 4| **** |  4| **** |  4|  *   |  4| **** |  4| **** |
-     * 5|    * |  5| *  * |  5|  *   |  5| *  * |  5|    * |
-     * 6|    * |  6| *  * |  6|  *   |  6| *  * |  6|    * |
-     * 7| **** |  7| **** |  7|  *   |  7| **** |  7| **** |
-     * 8|      |  8|      |  8|      |  8|      |  8|      |
-     *  +------+   +------+   +------+   +------+   +------+
-     */
-
-    // ----- 0 -----
-    for(int y = 2; y <= 6; ++y)
-    {
-        m_digits[0].setPixelColor(1, y, fontColor);
-        m_digits[0].setPixelColor(4, y, fontColor);
-    }
-    m_digits[0].setPixelColor(2, 1, fontColor);
-    m_digits[0].setPixelColor(3, 1, fontColor);
-    m_digits[0].setPixelColor(2, 7, fontColor);
-    m_digits[0].setPixelColor(3, 7, fontColor);
-    // ----- 1 -----
-    for(int y = 1; y <= 6; ++y)
-        m_digits[1].setPixelColor(3, y, fontColor);
-    for(int x = 1; x <= 4; ++x)
-        m_digits[1].setPixelColor(x, 7, fontColor);
-    m_digits[1].setPixelColor(2, 2, fontColor);
-    m_digits[1].setPixelColor(1, 3, fontColor);
-    // ----- 2 -----
-    for(int x = 1; x <= 4; ++x)
-    {
-        m_digits[2].setPixelColor(x, 1, fontColor);
-        m_digits[2].setPixelColor(x, 4, fontColor);
-        m_digits[2].setPixelColor(x, 7, fontColor);
-    }
-    m_digits[2].setPixelColor(4, 2, fontColor);
-    m_digits[2].setPixelColor(4, 3, fontColor);
-    m_digits[2].setPixelColor(1, 5, fontColor);
-    m_digits[2].setPixelColor(1, 6, fontColor);
-    // ----- 3 -----
-    for(int x = 1; x <= 4; ++x)
-    {
-        m_digits[3].setPixelColor(x, 1, fontColor);
-        m_digits[3].setPixelColor(x, 4, fontColor);
-        m_digits[3].setPixelColor(x, 7, fontColor);
-    }
-    m_digits[3].setPixelColor(4, 2, fontColor);
-    m_digits[3].setPixelColor(4, 3, fontColor);
-    m_digits[3].setPixelColor(4, 5, fontColor);
-    m_digits[3].setPixelColor(4, 6, fontColor);
-    // ----- 4 -----
-    for(int y = 1; y <= 7; ++y)
-        m_digits[4].setPixelColor(4, y, fontColor);
-    for(int y = 1; y <= 4; ++y)
-        m_digits[4].setPixelColor(1, y, fontColor);
-    m_digits[4].setPixelColor(2, 4, fontColor);
-    m_digits[4].setPixelColor(3, 4, fontColor);
-
-    // ----- 5 -----
-    for(int x = 1; x <= 4; ++x)
-    {
-        m_digits[5].setPixelColor(x, 1, fontColor);
-        m_digits[5].setPixelColor(x, 4, fontColor);
-        m_digits[5].setPixelColor(x, 7, fontColor);
-    }
-    m_digits[5].setPixelColor(1, 2, fontColor);
-    m_digits[5].setPixelColor(1, 3, fontColor);
-    m_digits[5].setPixelColor(4, 5, fontColor);
-    m_digits[5].setPixelColor(4, 6, fontColor);
-    // ----- 6 -----
-    for(int x = 1; x <= 4; ++x)
-    {
-        m_digits[6].setPixelColor(x, 1, fontColor);
-        m_digits[6].setPixelColor(x, 4, fontColor);
-        m_digits[6].setPixelColor(x, 7, fontColor);
-    }
-    m_digits[6].setPixelColor(1, 2, fontColor);
-    m_digits[6].setPixelColor(1, 3, fontColor);
-    m_digits[6].setPixelColor(1, 5, fontColor);
-    m_digits[6].setPixelColor(1, 6, fontColor);
-    m_digits[6].setPixelColor(4, 5, fontColor);
-    m_digits[6].setPixelColor(4, 6, fontColor);
-    // ----- 7 -----
-    for(int x = 1; x <= 4; ++x)
-        m_digits[7].setPixelColor(x, 1, fontColor);
-    m_digits[7].setPixelColor(4, 2, fontColor);
-    m_digits[7].setPixelColor(3, 3, fontColor);
-    for(int y = 4; y <= 7; ++y)
-        m_digits[7].setPixelColor(2, y, fontColor);
-    // ----- 8 -----
-    for(int x = 1; x <= 4; ++x)
-    {
-        m_digits[8].setPixelColor(x, 1, fontColor);
-        m_digits[8].setPixelColor(x, 4, fontColor);
-        m_digits[8].setPixelColor(x, 7, fontColor);
-    }
-    m_digits[8].setPixelColor(1, 2, fontColor);
-    m_digits[8].setPixelColor(1, 3, fontColor);
-    m_digits[8].setPixelColor(1, 5, fontColor);
-    m_digits[8].setPixelColor(1, 6, fontColor);
-    m_digits[8].setPixelColor(4, 2, fontColor);
-    m_digits[8].setPixelColor(4, 3, fontColor);
-    m_digits[8].setPixelColor(4, 5, fontColor);
-    m_digits[8].setPixelColor(4, 6, fontColor);
-    // ----- 9 -----
-    for(int x = 1; x <= 4; ++x)
-    {
-        m_digits[9].setPixelColor(x, 1, fontColor);
-        m_digits[9].setPixelColor(x, 4, fontColor);
-        m_digits[9].setPixelColor(x, 7, fontColor);
-    }
-    m_digits[9].setPixelColor(1, 2, fontColor);
-    m_digits[9].setPixelColor(1, 3, fontColor);
-    m_digits[9].setPixelColor(1, 5, fontColor);
-    m_digits[9].setPixelColor(1, 6, fontColor);
-    m_digits[9].setPixelColor(4, 5, fontColor);
-    m_digits[9].setPixelColor(4, 6, fontColor);
+        m_digits[0][i].load(pathPrefix.arg(i));
+    //! Medium
+    pathPrefix = ":/digits/medium/%1.png";
+    for(int i = 0; i < 10; ++i)
+        m_digits[1][i].load(pathPrefix.arg(i));
+    //! Large
+    pathPrefix = ":/digits/large/%1.png";
+    for(int i = 0; i < 10; ++i)
+        m_digits[2][i].load(pathPrefix.arg(i));
 }

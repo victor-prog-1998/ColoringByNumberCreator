@@ -28,5 +28,35 @@
         <file>QML/CustomCheckBox.qml</file>
         <file>icons/settings-icon.png</file>
         <file>icons/app-icon.png</file>
+        <file>digits/small/0.png</file>
+        <file>digits/small/1.png</file>
+        <file>digits/small/2.png</file>
+        <file>digits/small/3.png</file>
+        <file>digits/small/4.png</file>
+        <file>digits/small/5.png</file>
+        <file>digits/small/6.png</file>
+        <file>digits/small/7.png</file>
+        <file>digits/small/8.png</file>
+        <file>digits/small/9.png</file>
+        <file>digits/medium/0.png</file>
+        <file>digits/medium/1.png</file>
+        <file>digits/medium/2.png</file>
+        <file>digits/medium/3.png</file>
+        <file>digits/medium/4.png</file>
+        <file>digits/medium/5.png</file>
+        <file>digits/medium/6.png</file>
+        <file>digits/medium/7.png</file>
+        <file>digits/medium/8.png</file>
+        <file>digits/medium/9.png</file>
+        <file>digits/large/0.png</file>
+        <file>digits/large/1.png</file>
+        <file>digits/large/2.png</file>
+        <file>digits/large/3.png</file>
+        <file>digits/large/4.png</file>
+        <file>digits/large/5.png</file>
+        <file>digits/large/6.png</file>
+        <file>digits/large/7.png</file>
+        <file>digits/large/8.png</file>
+        <file>digits/large/9.png</file>
     </qresource>
 </RCC>

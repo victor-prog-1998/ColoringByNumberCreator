@@ -68,9 +68,10 @@ private:
     /*!
      * \brief Получение ширины числа [пикс]
      * \param[in] number - число
+     * \param[in] size - размер цифры [0..2]
      * \return ширина
      */
-    int _getNumberTextWidth(int number);
+    int _getNumberTextWidth(int number, int size);
     /*!
      * \brief Рисование контура на изображении
      * \param[in/out] image - изображение
@@ -90,16 +91,12 @@ private:
      * \param[in] number - число
      * \param[in/out] painter - объект QPainter c заданным контекстом рисования
      */
-    void _drawNumber(int x, int y, uint8_t number, QPainter &painter);
+    void _drawNumber(int x, int y, uint8_t number, int size, QPainter &painter);
     /*!
-     * \brief Создание изображений с цифрами (инициализация массива m_digits)
+     * \brief Открытие изображений с цифрами (инициализация массива m_digits)
      */
-    void _makeDigits();
+    void _initDigits();
 
-    //!< Высота цифры [пикс]
-    const int m_digitHeight = 9;
-    //!< Ширина цифры [пикс]
-    const int m_digitWidth = 6;
     //!< Расстояние между цифрами
     const int m_numberTextSpacing = -1;
     //!< Изображение с раскраской по номерам
@@ -109,7 +106,7 @@ private:
     //!< Изображение с легендой раскраски
     QImage m_legend;
     //!< Набор изображений с цифрами
-    QImage m_digits[10];
+    QImage m_digits[3][10];
     //!< Цвет контуров и цифр на раскраске
     QColor m_coloringColor{Qt::black};
 };
