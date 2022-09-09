@@ -13,6 +13,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+LIBS += -fopenmp
+QMAKE_CXXFLAGS += -fopenmp
+
+# Local path which contains file "omp.h"
+INCLUDEPATH += C:/Qt5.14.2/Tools/mingw730_64/lib/gcc/x86_64-w64-mingw32/7.3.0/include
+
 SOURCES += \
         src/algorithms.cpp \
         src/imageprocessor.cpp \

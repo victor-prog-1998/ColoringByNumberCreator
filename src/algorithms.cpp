@@ -1,5 +1,6 @@
 #include "include/algorithms.h"
-#include "math.h"
+#include <cmath>
+#include <omp.h>
 #include <QDebug>
 #include <QQueue>
 #include <QDateTime>
@@ -34,14 +35,21 @@ int findNearestColorIndex(const QColor &color, const QList<QColor> &colors)
 void posterize(const QImage &sourceImage, QImage &result,
                const QList<QColor> &colors)
 {
-    for(int y = 0; y < sourceImage.height(); ++y)
-      for(int x = 0; x < sourceImage.width(); ++x)
-      {
-        QColor srcPixColor = sourceImage.pixelColor(x, y);
-        QColor posterizedPixColor =
-                colors[findNearestColorIndex(srcPixColor, colors)];
-        result.setPixelColor(x, y, posterizedPixColor);
-      }
+#pragma omp parallel
+    {
+#pragma omp for
+        for(int y = 0; y < sourceImage.height(); ++y)
+          for(int x = 0; x < sourceImage.width(); ++x)
+          {
+            QColor srcPixColor = sourceImage.pixelColor(x, y);
+            QColor posterizedPixColor =
+                    colors[findNearestColorIndex(srcPixColor, colors)];
+            //#pragma omp critical
+            {
+            result.setPixelColor(x, y, posterizedPixColor);
+            }
+          }
+    }
 }
 
 void rgb2xyz(const QColor &rgbColor, double &x, double &y, double &z)
@@ -113,45 +121,57 @@ void medianFilter(const QImage &sourceImage, QImage &result,
     qDebug() << "Некорректный размер маски медианного фильтра: " << maskSize;
     return;
   }
+  int maskRadius = maskSize / 2;
+  int medIndex = maskSize * maskSize / 2;
+
   QImage inputImage{sourceImage}; // на каждой итерации применяется фильтр
   for(int it = 0; it < iterations; ++it)
   {
+    #pragma omp parallel
+    {
+    #pragma omp for
     for(int y = 0; y < inputImage.height(); ++y)
       for(int x = 0; x < inputImage.width(); ++x)
       {
         QList<QPair<double,QColor>> maskValues;
-        int xFrom = x - maskSize / 2;
-        int xTo = x + maskSize / 2;
-        int yFrom = y - maskSize / 2;
-        int yTo = y + maskSize / 2;
-        for(int yMask = yFrom; yMask <= yTo; ++yMask)
-          for(int xMask = xFrom; xMask <= xTo; ++xMask)
-          {
-            double value = 0.0;
-            QColor color;
-            if(yMask < 0 || xMask < 0 ||
-               yMask >= inputImage.height() || xMask >= inputImage.width())
+        int xFrom = x - maskRadius;
+        int xTo = x + maskRadius;
+        int yFrom = y - maskRadius;
+        int yTo = y + maskRadius;
+        {
+          for(int yMask = yFrom; yMask <= yTo; ++yMask)
+            for(int xMask = xFrom; xMask <= xTo; ++xMask)
             {
-              color = Qt::black;
+              double value = 0.0;
+              QColor color;
+              if(yMask < 0 || xMask < 0 ||
+                 yMask >= inputImage.height() || xMask >= inputImage.width())
+              {
+                color = Qt::black;
+              }
+              else
+              {
+                color = inputImage.pixelColor(xMask, yMask);
+                value = 0.2126 * color.red() + 0.7152 * color.green() +
+                        0.0722 * color.blue();
+              }
+              maskValues << QPair<double,QColor>{value, color};
             }
-            else
-            {
-              color = inputImage.pixelColor(xMask, yMask);
-              value = 0.2126 * color.red() + 0.7152 * color.green() +
-                      0.0722 * color.blue();
-            }
-            maskValues << QPair<double,QColor>{value, color};
-          }
+        }
+
         std::sort(maskValues.begin(), maskValues.end(),
                   [](const QPair<double,QColor>& a,
                   const QPair<double,QColor>& b)
         {
             return b.first > a.first;
         });
-        int medIndex = maskValues.size() / 2;
         QColor medPixColor = maskValues[medIndex].second;
-        result.setPixelColor(x, y, medPixColor);
+        #pragma omp critical
+        {
+          result.setPixelColor(x, y, medPixColor);
+        }
       }
+    }
     inputImage = result;
   }
 }
@@ -170,6 +190,8 @@ void averagingFilter(const QImage &sourceImage, QImage &result,
     int maskCount = maskSize * maskSize; // количество пикселей в маске
     for(int it = 0; it < iterations; ++it)
     {
+      // с OpenMP работает медленнее
+      {
       for(int y = 0; y < inputImage.height(); ++y)
         for(int x = 0; x < inputImage.width(); ++x)
         {
@@ -203,6 +225,7 @@ void averagingFilter(const QImage &sourceImage, QImage &result,
           result.setPixelColor(x, y, QColor(r, g, b));
         }
       inputImage = result;
+    }
     }
 }
 
@@ -309,11 +332,16 @@ QPair<QList<QColor>, QList<QColor> > splitPixels(const QList<QColor> &pixels)
     uint64_t greenSum {0};
     uint64_t blueSum {0};
 
-    for(const auto& pix: pixels)
+#pragma omp parallel reduction (+: redSum) reduction (+: greenSum) \
+                     reduction (+: blueSum)
     {
-        redSum += pix.red();
-        greenSum += pix.green();
-        blueSum += pix.blue();
+#pragma omp for
+    for(int i = 0; i < pixels.size(); ++i)
+    {
+        redSum += pixels[i].red();
+        greenSum += pixels[i].green();
+        blueSum += pixels[i].blue();
+    }
     }
 
     int redAvg = qRound(static_cast<double>(redSum) / pixels.size());
@@ -326,18 +354,18 @@ QPair<QList<QColor>, QList<QColor> > splitPixels(const QList<QColor> &pixels)
     redMin = greenMin = blueMin = 255;
     redDisp = greenDisp = blueDisp = 0;
 
-    for(const auto& pix: pixels)
+    for(int i = 0; i < pixels.size(); ++i)
     {
-        redDisp += std::abs(pix.red() - redAvg);
-        greenDisp += std::abs(pix.green() - greenAvg);
-        blueDisp += std::abs(pix.blue() - blueAvg);
+        redDisp += std::abs(pixels[i].red() - redAvg);
+        greenDisp += std::abs(pixels[i].green() - greenAvg);
+        blueDisp += std::abs(pixels[i].blue() - blueAvg);
 
-        redMin = std::min(redMin, pix.red());
-        greenMin = std::min(greenMin, pix.green());
-        blueMin = std::min(blueMin, pix.blue());
-        redMax = std::max(redMax, pix.red());
-        greenMax = std::max(greenMax, pix.green());
-        blueMax = std::max(blueMax, pix.blue());
+        redMin = std::min(redMin, pixels[i].red());
+        greenMin = std::min(greenMin, pixels[i].green());
+        blueMin = std::min(blueMin, pixels[i].blue());
+        redMax = std::max(redMax, pixels[i].red());
+        greenMax = std::max(greenMax, pixels[i].green());
+        blueMax = std::max(blueMax, pixels[i].blue());
     }
 
     uint64_t maxDisp;
@@ -415,10 +443,10 @@ DataTypes::PointsMatrix makePointsMatrix(const QList<QPoint> &points)
     {
       int x = points[i].x();
       int y = points[i].y();
-      if(x < minX) minX = x;
-      if(x > maxX) maxX = x;
-      if(y < minY) minY = y;
-      if(y > maxY) maxY = y;
+      minX = std::min(minX, x);
+      minY = std::min(minY, y);
+      maxX = std::max(maxX, x);
+      maxY = std::max(maxY, y);
     }
 
     DataTypes::PointsMatrix matrix;
@@ -555,6 +583,9 @@ QImage makeEdgesImage(const QImage &posterized)
     // нахождение краёв
     QImage edgesImage(posterized.size(), QImage::Format_RGB888);
     edgesImage.fill(Qt::white);
+#pragma omp parallel
+    {
+#pragma omp for
     for(int y = 0; y < posterized.height() - 1; ++y)
       for(int x = 0; x < posterized.width() - 1; ++x)
       {
@@ -563,11 +594,13 @@ QImage makeEdgesImage(const QImage &posterized)
         QColor bottom = posterized.pixelColor(x, y + 1);
         if(current != right || current != bottom)
         {
-            edgesImage.setPixelColor(x, y, Qt::black);
+          #pragma omp critical
+          {
+          edgesImage.setPixelColor(x, y, Qt::black);
+          }
         }
       }
-
-
+    }
     // рамка
     for(int x = 0; x < edgesImage.width(); ++x)
     {
@@ -627,10 +660,17 @@ QStringList findOptimalPalette(const QImage &image, int colorsCount)
     while(!pixelsQueue.isEmpty())
       colorsList << pixelsQueue.dequeue();
 
-    for(const auto& colors: colorsList)
+    #pragma omp parallel
     {
-        QColor paletteColor = Algorithms::averageColor(colors);
+    #pragma omp for
+    for(int i = 0; i < colorsList.size(); ++i)
+    {
+        QColor paletteColor = Algorithms::averageColor(colorsList[i]);
+        #pragma omp critical
+        {
         palette << paletteColor.name(QColor::HexRgb);
+        }
+    }
     }
 
     return palette;
@@ -674,7 +714,10 @@ QImage scaleImage2x(const QImage &image, int iterations)
         int bottomY = srcImage.height() - 1;
         int rightX = srcImage.width() - 1;
 
+        // с OpenMP работает медленнее
         for(int x = 1; x < rightX; ++x)
+        {
+          int pixX = x * 2;
           for(int y = 1; y < bottomY; ++y)
           {
             QColor c1, c2, c3, c4, a, b, c, d;
@@ -689,7 +732,6 @@ QImage scaleImage2x(const QImage &image, int iterations)
             if(d==c && d!=b && c!=a) c3 = c;
             if(b==d && b!=a && d!=c) c4 = d;
 
-            int pixX = x * 2;
             int pixY = y * 2;
 
             tmpImage.setPixelColor(pixX,     pixY,     c1);
@@ -697,7 +739,7 @@ QImage scaleImage2x(const QImage &image, int iterations)
             tmpImage.setPixelColor(pixX,     pixY + 1, c3);
             tmpImage.setPixelColor(pixX + 1, pixY + 1, c4);
           }
-
+        }
         srcImage = tmpImage;
     }
 
@@ -715,7 +757,10 @@ QImage scaleImage3x(const QImage &image, int iterations)
         int bottomY = srcImage.height() - 1;
         int rightX = srcImage.width() - 1;
 
+        // с OpenMP работает медленнее
         for(int x = 1; x < rightX; ++x)
+        {
+          int pixX = x * 3;
           for(int y = 1; y < bottomY; ++y)
           {
             QColor c1, c2, c3, c4, c5, c6, c7, c8, c9;
@@ -745,7 +790,6 @@ QImage scaleImage3x(const QImage &image, int iterations)
                     (h==d && h!=f && d!=b && e!=i)) c8=h;
             if(f==h && f!=b && h!=d) c9=f;
 
-            int pixX = x * 3;
             int pixY = y * 3;
 
             tmpImage.setPixelColor(pixX,     pixY,     c1);
@@ -758,11 +802,11 @@ QImage scaleImage3x(const QImage &image, int iterations)
             tmpImage.setPixelColor(pixX + 1, pixY + 2, c8);
             tmpImage.setPixelColor(pixX + 2, pixY + 2, c9);
           }
+        }
 
         srcImage = tmpImage;
     }
 
     return srcImage;
 }
-
 }

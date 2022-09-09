@@ -2,6 +2,7 @@
 #define DATATYPES_H
 #include <QList>
 #include <QPoint>
+#include <chrono>
 
 namespace DataTypes
 {
@@ -52,6 +53,35 @@ struct PointsMatrix
     uint16_t height() const {return values.size();}
     //!< Ширина описывающего прямоугольника (число столбцов матрицы) [пикс]
     uint16_t width() const {return values.isEmpty() ? 0 : values[0].size();};
+};
+
+/*!
+ * \brief Класс для измерения времени выполнения кода
+ */
+class StopWatch
+{
+public:
+    /*!
+     * \brief Начать измерение
+     */
+    void start()  {mStart = std::chrono::steady_clock::now();}
+    /*!
+     * \brief Закончить измерение
+     */
+    void finish() {mFinish = std::chrono::steady_clock::now();}
+    /*!
+     * \brief Получить замеренное время (по умолчанию - в микросекундах)
+     */
+    template<class T = std::chrono::microseconds>
+    size_t duration() const
+    {
+        return std::chrono::duration_cast<T>(mFinish - mStart).count();
+    }
+private:
+    //!< Начальная точка измерения
+    std::chrono::steady_clock::time_point mStart;
+    //!< Конечная точка измерения
+    std::chrono::steady_clock::time_point mFinish;
 };
 }
 

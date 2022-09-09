@@ -22,9 +22,16 @@ void ImageProcessor::posterize()
     QImage filtered(m_currentImage.size(), QImage::Format_RGB888);
     QImage posterized(m_currentImage.size(), QImage::Format_RGB888);
 
-    Algorithms::medianFilter(m_currentImage, filtered, 3, 2);
 
-    Algorithms::averagingFilter(filtered, filtered, 3, 2);
+
+    if(m_imageProvider->contains("filtered"))
+        filtered = m_imageProvider->get("filtered");
+    else
+    {
+        Algorithms::medianFilter(m_currentImage, filtered, 3, 2);
+        Algorithms::averagingFilter(filtered, filtered, 3, 2);
+        m_imageProvider->add("filtered", filtered);
+    }
     Algorithms::posterize(filtered, posterized, m_colors);
     Algorithms::medianFilter(posterized, posterized, 3, 3);
 
@@ -42,6 +49,8 @@ bool ImageProcessor::setCurrentImage(const QString &source)
     }
     if(m_imageProvider->contains("edges"))
         m_imageProvider->remove("edges");
+    if(m_imageProvider->contains("filtered"))
+        m_imageProvider->remove("filtered");
     return true;
 }
 
