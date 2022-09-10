@@ -35,21 +35,15 @@ int findNearestColorIndex(const QColor &color, const QList<QColor> &colors)
 void posterize(const QImage &sourceImage, QImage &result,
                const QList<QColor> &colors)
 {
-#pragma omp parallel
-    {
-#pragma omp for
-        for(int y = 0; y < sourceImage.height(); ++y)
-          for(int x = 0; x < sourceImage.width(); ++x)
-          {
-            QColor srcPixColor = sourceImage.pixelColor(x, y);
-            QColor posterizedPixColor =
-                    colors[findNearestColorIndex(srcPixColor, colors)];
-            //#pragma omp critical
-            {
-            result.setPixelColor(x, y, posterizedPixColor);
-            }
-          }
-    }
+    // С OpenMP работает медленнее (при защищённом доступе к result)
+    for(int y = 0; y < sourceImage.height(); ++y)
+      for(int x = 0; x < sourceImage.width(); ++x)
+      {
+        QColor srcPixColor = sourceImage.pixelColor(x, y);
+        QColor posterizedPixColor =
+                colors[findNearestColorIndex(srcPixColor, colors)];
+        result.setPixelColor(x, y, posterizedPixColor);
+      }
 }
 
 void rgb2xyz(const QColor &rgbColor, double &x, double &y, double &z)
@@ -321,8 +315,6 @@ QList<QPoint> findContour(const QImage &image, const QList<QPoint> &pixels)
     return contourPixels;
 }
 
-
-
 QPair<QList<QColor>, QList<QColor> > splitPixels(const QList<QColor> &pixels)
 {
     if(pixels.size() < 2)
@@ -354,18 +346,18 @@ QPair<QList<QColor>, QList<QColor> > splitPixels(const QList<QColor> &pixels)
     redMin = greenMin = blueMin = 255;
     redDisp = greenDisp = blueDisp = 0;
 
-    for(int i = 0; i < pixels.size(); ++i)
+    for(const auto& pix: pixels)
     {
-        redDisp += std::abs(pixels[i].red() - redAvg);
-        greenDisp += std::abs(pixels[i].green() - greenAvg);
-        blueDisp += std::abs(pixels[i].blue() - blueAvg);
+        redDisp += std::abs(pix.red() - redAvg);
+        greenDisp += std::abs(pix.green() - greenAvg);
+        blueDisp += std::abs(pix.blue() - blueAvg);
 
-        redMin = std::min(redMin, pixels[i].red());
-        greenMin = std::min(greenMin, pixels[i].green());
-        blueMin = std::min(blueMin, pixels[i].blue());
-        redMax = std::max(redMax, pixels[i].red());
-        greenMax = std::max(greenMax, pixels[i].green());
-        blueMax = std::max(blueMax, pixels[i].blue());
+        redMin = std::min(redMin, pix.red());
+        greenMin = std::min(greenMin, pix.green());
+        blueMin = std::min(blueMin, pix.blue());
+        redMax = std::max(redMax, pix.red());
+        greenMax = std::max(greenMax, pix.green());
+        blueMax = std::max(blueMax, pix.blue());
     }
 
     uint64_t maxDisp;
