@@ -340,10 +340,7 @@ QPair<QList<QColor>, QList<QColor> > splitPixels(const QList<QColor> &pixels)
     int greenAvg = qRound(static_cast<double>(greenSum) / pixels.size());
     int blueAvg = qRound(static_cast<double>(blueSum) / pixels.size());
 
-    int redMax, redMin, greenMax, greenMin, blueMax, blueMin;
     uint64_t redDisp, greenDisp, blueDisp;
-    redMax = greenMax = blueMax = 0;
-    redMin = greenMin = blueMin = 255;
     redDisp = greenDisp = blueDisp = 0;
 
     for(const auto& pix: pixels)
@@ -351,13 +348,6 @@ QPair<QList<QColor>, QList<QColor> > splitPixels(const QList<QColor> &pixels)
         redDisp += std::abs(pix.red() - redAvg);
         greenDisp += std::abs(pix.green() - greenAvg);
         blueDisp += std::abs(pix.blue() - blueAvg);
-
-        redMin = std::min(redMin, pix.red());
-        greenMin = std::min(greenMin, pix.green());
-        blueMin = std::min(blueMin, pix.blue());
-        redMax = std::max(redMax, pix.red());
-        greenMax = std::max(greenMax, pix.green());
-        blueMax = std::max(blueMax, pix.blue());
     }
 
     uint64_t maxDisp;
