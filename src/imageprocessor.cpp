@@ -41,7 +41,11 @@ void ImageProcessor::posterize()
 bool ImageProcessor::setCurrentImage(const QString &source)
 {
     // file:///C:/....
-    QString src = source.right(source.size() - 8);
+    int offset = 8;
+#ifdef  __linux__
+    offset = 7;
+#endif
+    QString src = source.right(source.size() - offset);
     if(!m_currentImage.load(src))
     {
         qDebug() << "ImageProcessor: Не удалось загрузить изображение";
@@ -151,7 +155,11 @@ void ImageProcessor::removeColoringFromProvider()
 void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
                                  int tileColumns)
 {
-    QString path = folderPath + '/';
+    QString path;
+#ifdef __linux__
+    path += '/';
+#endif
+    path += folderPath + '/';
     if(!m_imageProvider->contains("coloring"))
         return;
     QImage coloring = m_imageProvider->get("coloring");
@@ -165,6 +173,7 @@ void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
     QString coloringPath = path + "coloring.png";
     QString paintedPath = path + "painted.png";
     QString legendPath = path + "legend.png";
+    qDebug() << coloringPath;
     coloring.save(coloringPath, "PNG");
     painted.save(paintedPath, "PNG");
     legend.save(legendPath, "PNG");

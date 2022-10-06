@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtQuick.Dialogs 1.2
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.3
 
 SidePanel{
     id: root
@@ -11,7 +11,7 @@ SidePanel{
     function getColors()
     {
         let colors = [];
-        for(let i = 0; i < colorsModel.count; ++i)
+        for(var i = 0; i < colorsModel.count; ++i)
             colors.push(colorsModel.get(i)._color)
         return colors;
     }
@@ -66,7 +66,7 @@ SidePanel{
                 onAccepted: {
                     let palette = imageProcessor.findOptimalPalette(value);
                     colorsModel.clear();
-                    for(let i = 0; i < palette.length; ++i)
+                    for(var i = 0; i < palette.length; ++i)
                     {
                         let obj = {};
                         obj._color = palette[i];

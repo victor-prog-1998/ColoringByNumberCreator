@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import QtQuick.Layouts 1.12
+import QtQuick.Layouts 1.3
 
 Item {
     id: root
@@ -9,7 +9,7 @@ Item {
 
     function setCurrentColor(colorName)
     {
-        for(let i = 0; i < colorsModel.count; ++i)
+        for(var i = 0; i < colorsModel.count; ++i)
         {
             let col = colorsModel.get(i)._color;
             if(col === colorName)

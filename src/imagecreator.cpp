@@ -242,7 +242,7 @@ void ImageCreator::_createLegend(const QMap<QString, int> &colorsMap)
     int legendWidth = margins * 2 + columnsCount *
                       (itemSize + spacing) - spacing;
     int legendHeight = margins * 2 + rowsCount * (itemSize + spacing) - spacing;
-    m_legend = QImage(legendWidth, legendHeight, QImage::Format_BGR888);
+    m_legend = QImage(legendWidth, legendHeight, QImage::Format_RGB888);
     m_legend.fill(Qt::white);
     QPainter painter(&m_legend);
     painter.setPen(Qt::black);
