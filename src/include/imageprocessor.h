@@ -20,12 +20,12 @@ public:
      * \brief Установка провайдера изображений
      * \param[in] provider - провайдер
      */
-    void setImageProvider(ImageProvider* provider) {m_imageProvider = provider;}
+    static void setImageProvider(ImageProvider* provider) {m_imageProvider = provider;}
     /*!
      * \brief Установка менеджера настроек
      * \param[in] configManager - менеджер настроек
      */
-    void setConfigManager(ConfigManager* configManager)
+    static void setConfigManager(ConfigManager* configManager)
                          {m_configManager = configManager;}
     /*!
      * \brief Постеризация текущего изображения
@@ -123,9 +123,9 @@ private:
     //!< Текущее изображение
     QImage m_currentImage;
     //!< Провайдер изображений
-    ImageProvider *m_imageProvider;
+    static  ImageProvider *m_imageProvider;
     //!< Менеджер настроек
-    ConfigManager *m_configManager;
+    static ConfigManager *m_configManager;
     //!< Объект класса для создания результатов (раскраски)
     ImageCreator m_imageCreator;
     //!< Набор цветов раскраски

@@ -18,13 +18,14 @@ int main(int argc, char *argv[])
 
     ImageProvider imageProvider;
     ConfigManager configManager;
-    ImageProcessor imageProcessor;
-    imageProcessor.setImageProvider(&imageProvider);
-    imageProcessor.setConfigManager(&configManager);
+
+    ImageProcessor::setImageProvider(&imageProvider);
+    ImageProcessor::setConfigManager(&configManager);
 
     QQmlApplicationEngine engine;
 
-    engine.rootContext()->setContextProperty("imageProcessor", &imageProcessor);
+    qmlRegisterType<ImageProcessor>("com.MyTypes.ImageProcessor", 1, 0,
+                                    "ImageProcessor");
     engine.rootContext()->setContextProperty("configManager", &configManager);
 
     const QUrl url(QStringLiteral("qrc:/QML/main.qml"));

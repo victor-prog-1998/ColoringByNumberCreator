@@ -7,6 +7,9 @@
 #include <QDir>
 #include "include/algorithms.h"
 
+ImageProvider* ImageProcessor::m_imageProvider;
+ConfigManager* ImageProcessor::m_configManager;
+
 ImageProcessor::ImageProcessor(QObject *parent) : QObject(parent)
 {
 }
@@ -173,7 +176,6 @@ void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
     QString coloringPath = path + "coloring.png";
     QString paintedPath = path + "painted.png";
     QString legendPath = path + "legend.png";
-    qDebug() << coloringPath;
     coloring.save(coloringPath, "PNG");
     painted.save(paintedPath, "PNG");
     legend.save(legendPath, "PNG");
