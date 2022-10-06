@@ -15,6 +15,16 @@ SidePanel{
             colors.push(colorsModel.get(i)._color)
         return colors;
     }
+    function setPalette(palette)
+    {
+        colorsModel.clear();
+        for(var i = 0; i < palette.length; ++i)
+        {
+            let obj = {};
+            obj._color = palette[i];
+            colorsModel.append(obj);
+        }
+    }
 
     Item{
         anchors.top: header.bottom
@@ -64,14 +74,8 @@ SidePanel{
                 x: colorPalleteButton.x
                 y: colorPalleteButton.y - height
                 onAccepted: {
-                    let palette = imageProcessor.findOptimalPalette(value);
+                    imageProcessor.findOptimalPalette(value);
                     colorsModel.clear();
-                    for(var i = 0; i < palette.length; ++i)
-                    {
-                        let obj = {};
-                        obj._color = palette[i];
-                        colorsModel.append(obj);
-                    }
                 }
             }
             CustomButton{

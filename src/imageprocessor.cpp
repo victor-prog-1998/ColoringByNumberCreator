@@ -12,6 +12,9 @@ ConfigManager* ImageProcessor::m_configManager;
 
 ImageProcessor::ImageProcessor(QObject *parent) : QObject(parent)
 {
+    mFindPaletteThread = new FindPaletteThread(this);
+    connect(mFindPaletteThread, &FindPaletteThread::finished,
+            this, &ImageProcessor::findPaletteFinished);
 }
 
 void ImageProcessor::posterize()
@@ -69,15 +72,15 @@ void ImageProcessor::setColors(const QStringList &colors)
         m_colors.push_back(QColor(color));
 }
 
-QStringList ImageProcessor::findOptimalPalette(int colorsCount)
+void ImageProcessor::findOptimalPalette(int colorsCount)
 {
     if(m_currentImage.isNull())
     {
         qDebug() << "Изображение не задано";
-        return QStringList();
+        emit findPaletteFinished(QStringList());
     }
-    auto palette = Algorithms::findOptimalPalette(m_currentImage, colorsCount);
-    return palette;
+    mFindPaletteThread->set(m_currentImage, colorsCount);
+    mFindPaletteThread->start();
 }
 
 void ImageProcessor::changeColor(int x, int y, const QColor &color)

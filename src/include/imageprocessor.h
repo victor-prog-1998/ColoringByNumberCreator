@@ -6,6 +6,7 @@
 #include "imageprovider.h"
 #include "configmanager.h"
 #include "imagecreator.h"
+#include "findpalettethread.h"
 
 /*!
  * \brief Класс высокого уровня, связвающий графический интерфейс на QML
@@ -46,10 +47,10 @@ public:
     /*!
      * \brief Нахождение оптимальной палитры постеризации
      *        по указанному числу цветов
+     * \details Запускает поток расчёта палитры
      * \param[in] colorsCount - число цветов
-     * \return
      */
-    Q_INVOKABLE QStringList findOptimalPalette(int colorsCount);
+    Q_INVOKABLE void findOptimalPalette(int colorsCount);
     /*!
      * \brief Замена цвета на постеризованном изображении с цвета
      *        указанного пикселя на новый цвет
@@ -130,8 +131,14 @@ private:
     ImageCreator m_imageCreator;
     //!< Набор цветов раскраски
     QList<QColor> m_colors;
-signals:
+    FindPaletteThread *mFindPaletteThread;
 
+signals:
+    /*!
+     * \brief Сигнал завершения расчета палитры (завершения потока)
+     * \param palette - палитра в виде списка строк с именами цветов
+     */
+    void findPaletteFinished(const QStringList& palette);
 };
 
 #endif // IMAGEPROCESSOR_H

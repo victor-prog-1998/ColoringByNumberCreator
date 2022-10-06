@@ -8,6 +8,9 @@ import com.MyTypes.ImageProcessor 1.0
 Window {
     ImageProcessor{
         id: imageProcessor
+        onFindPaletteFinished: {
+            paletteSidePanel.setPalette(palette);
+        }
     }
     id: root
     visible: true
