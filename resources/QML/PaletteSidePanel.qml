@@ -5,6 +5,7 @@ import QtQuick.Controls 2.3
 SidePanel{
     id: root
     property alias colorsModel: colorsModel
+    property bool posterizationProcess: false
     signal posterizeButtonClicked()
     minimumWidth: 200
     title: "Палитра"
@@ -99,7 +100,7 @@ SidePanel{
                 width: parent.width
                 text: "Постеризовать"
                 onClicked: root.posterizeButtonClicked()
-                enabled: colorsModel.count > 1
+                enabled: !root.posterizationProcess && colorsModel.count > 1
             }
         }
     }

@@ -7,6 +7,7 @@
 #include "configmanager.h"
 #include "imagecreator.h"
 #include "findpalettethread.h"
+#include "posterizationthread.h"
 
 /*!
  * \brief Класс высокого уровня, связвающий графический интерфейс на QML
@@ -131,14 +132,31 @@ private:
     ImageCreator m_imageCreator;
     //!< Набор цветов раскраски
     QList<QColor> m_colors;
+    //!< Поток расчёта палитры
     FindPaletteThread *mFindPaletteThread;
+    //!< Поток постеризации
+    PosterizationThread *mPosterizationThread;
+private slots:
+    /*!
+     * \brief Слот, вызываемый при окончании работы потока постеризации
+     */
+    void posterizationFinishedSlot();
 
 signals:
     /*!
-     * \brief Сигнал завершения расчета палитры (завершения потока)
+     * \brief Сигнал завершения расчета палитры
      * \param palette - палитра в виде списка строк с именами цветов
      */
     void findPaletteFinished(const QStringList& palette);
+    /*!
+     * \brief Сигнал завершения постеризации
+     */
+    void posterizationFinished();
+    /*!
+     * \brief Сигнал, передающий сообщение
+     * \param message - строка с сообщением
+     */
+    void message(const QString& message);
 };
 
 #endif // IMAGEPROCESSOR_H

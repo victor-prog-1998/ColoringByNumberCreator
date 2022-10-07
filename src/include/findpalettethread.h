@@ -22,17 +22,17 @@ public:
      * \param[in] colorsCount - число цветов палитры
      */
     void set(const QImage& image, int colorsCount);
-private:
-    //!< Изображение
-    QImage mImage;
-    //!< Число цветов палитры
-    int mColorsCount;
 signals:
     /*!
      * \brief Сигнал завершения расчета палитры (завершения потока)
      * \param palette - палитра в виде списка строк с именами цветов
      */
     void finished(const QStringList& palette);
+private:
+    //!< Изображение
+    QImage m_image;
+    //!< Число цветов палитры
+    int m_colorsCount;
 };
 
 #endif // FINDPALETTETHREAD_H

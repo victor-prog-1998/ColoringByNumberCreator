@@ -26,7 +26,8 @@ SOURCES += \
         src/imagecreator.cpp \
         src/configmanager.cpp \
         src/main.cpp \
-        src/findpalettethread.cpp
+        src/findpalettethread.cpp \
+        src/posterizationthread.cpp
 
 RESOURCES += resources/qml.qrc
 
@@ -48,4 +49,5 @@ HEADERS += \
     src/include/imagecreator.h \
     src/include/imageprocessor.h \
     src/include/imageprovider.h \
-    src/include/findpalettethread.h
+    src/include/findpalettethread.h \
+    src/include/posterizationthread.h

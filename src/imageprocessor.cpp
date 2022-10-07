@@ -14,7 +14,19 @@ ImageProcessor::ImageProcessor(QObject *parent) : QObject(parent)
 {
     mFindPaletteThread = new FindPaletteThread(this);
     connect(mFindPaletteThread, &FindPaletteThread::finished,
-            this, &ImageProcessor::findPaletteFinished);
+            this, [this](const QStringList& palette) {
+        emit this->findPaletteFinished(palette);
+        emit this->message("Готово");
+    });
+
+    mPosterizationThread = new PosterizationThread(this);
+    connect(mPosterizationThread, &PosterizationThread::finished,
+            this, &ImageProcessor::posterizationFinishedSlot);
+
+
+    //! Сигналы прогресса
+    connect(mPosterizationThread, &PosterizationThread::progress,
+            this, &ImageProcessor::message);
 }
 
 void ImageProcessor::posterize()
@@ -25,23 +37,16 @@ void ImageProcessor::posterize()
         removeEdgesFromProvider();
     if(m_imageProvider->contains("coloring"))
         removeColoringFromProvider();
+
     QImage filtered(m_currentImage.size(), QImage::Format_RGB888);
     QImage posterized(m_currentImage.size(), QImage::Format_RGB888);
 
+    bool alreadyFiltered = m_imageProvider->contains("filtered");
+    QImage image = alreadyFiltered ? m_imageProvider->get("filtered") :
+                                     m_currentImage;
 
-
-    if(m_imageProvider->contains("filtered"))
-        filtered = m_imageProvider->get("filtered");
-    else
-    {
-        Algorithms::medianFilter(m_currentImage, filtered, 3, 2);
-        Algorithms::averagingFilter(filtered, filtered, 3, 2);
-        m_imageProvider->add("filtered", filtered);
-    }
-    Algorithms::posterize(filtered, posterized, m_colors);
-    Algorithms::medianFilter(posterized, posterized, 3, 3);
-
-    m_imageProvider->add("posterized", posterized);
+    mPosterizationThread->set(alreadyFiltered, image, m_colors);
+    mPosterizationThread->start();
 }
 
 bool ImageProcessor::setCurrentImage(const QString &source)
@@ -76,9 +81,10 @@ void ImageProcessor::findOptimalPalette(int colorsCount)
 {
     if(m_currentImage.isNull())
     {
-        qDebug() << "Изображение не задано";
         emit findPaletteFinished(QStringList());
+        message("Изображение не задано");
     }
+    message("Идёт расчёт палитры");
     mFindPaletteThread->set(m_currentImage, colorsCount);
     mFindPaletteThread->start();
 }
@@ -230,5 +236,14 @@ void ImageProcessor::scalePosterizedImage()
         break;
     }
     m_imageProvider->add("scaled_posterized", scaledPosterized);
+}
+
+void ImageProcessor::posterizationFinishedSlot()
+{
+    if(!mPosterizationThread->filtered())
+        m_imageProvider->add("filtered", mPosterizationThread->getFilteredImage());
+    m_imageProvider->add("posterized", mPosterizationThread->getPosterizedImage());
+    emit posterizationFinished();
+    emit message("Готово");
 }
 

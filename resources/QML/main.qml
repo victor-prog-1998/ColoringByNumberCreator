@@ -11,6 +11,16 @@ Window {
         onFindPaletteFinished: {
             paletteSidePanel.setPalette(palette);
         }
+        onPosterizationFinished: {
+            paletteSidePanel.posterizationProcess = false;
+            imageArea.source = "";
+            imageArea.source = root.posterizedImageSource
+            root.posterized = true;
+            pageHeader.modeComboBox.currentIndex = pageHeader.modeComboBoxPosterizedlIndex;
+        }
+        onMessage: {
+            pageFooter.footerText.text = message;
+        }
     }
     id: root
     visible: true
@@ -71,7 +81,7 @@ Window {
         }
 
         onChangeColorButtonClicked: {
-            footerText.text = changeColorMode ?
+            pageFooter.footerText.text = changeColorMode ?
                         "Укажите точку с цветом, который хотите заменить" : ""
         }
 
@@ -84,20 +94,20 @@ Window {
             {
                 paletteSidePanel.close()
                 colorSidePanel.open();
-                footerText.text = "Укажите пиксель, которому хотите задать выбранный цвет"
+                pageFooter.footerText.text = "Укажите пиксель, которому хотите задать выбранный цвет"
             }
             else
-                footerText.text = ""
+                pageFooter.footerText.text = ""
         }
         onFillModeChanged: {
             if(fillMode)
             {
                 paletteSidePanel.close()
                 colorSidePanel.open();
-                footerText.text = "Укажите область, которую хотите залить выбранным цветом"
+                pageFooter.footerText.text = "Укажите область, которую хотите залить выбранным цветом"
             }
             else
-                footerText.text = ""
+                pageFooter.footerText.text = ""
         }
     }
     Item{
@@ -119,13 +129,9 @@ Window {
                 anchors.bottom: parent.bottom
                 visible: false
                 onPosterizeButtonClicked: {
+                    posterizationProcess = true;
                     imageProcessor.setColors(paletteSidePanel.getColors())
                     imageProcessor.posterize();
-                    footerText.text = ""
-                    imageArea.source = "";
-                    imageArea.source = root.posterizedImageSource
-                    root.posterized = true;
-                    pageHeader.modeComboBox.currentIndex = pageHeader.modeComboBoxPosterizedlIndex;
                 }
             }
 
@@ -176,29 +182,14 @@ Window {
         }
     }
 
-    Rectangle{
+    PageFooter{
         id: pageFooter
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 30
         color: pageHeader.color
-        Text{
-            id: footerText
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            font.pointSize: 11
-            text: "Откройте изображение"
-        }
-
-        Text{
-            anchors.bottom: parent.bottom
-            anchors.right: parent.right
-            anchors.margins: 10
-            font.pointSize: 9
-            text: Math.floor(imageArea.zoom * 100) + " %";
-        }
+        footerText.text: "Откройте изображение"
+        scaleText.text: Math.floor(imageArea.zoom * 100) + " %";
     }
 
     FileDialog{
@@ -213,7 +204,7 @@ Window {
                 pageHeader.modeComboBox.currentIndex = pageHeader.modeComboBoxOriginalIndex;
                 pageHeader.paletteButton.visible = true;
                 root.posterized = false;
-                footerText.text = "Задайте палитру и постеризуйте изображение"
+                pageFooter.footerText.text = "Задайте палитру и постеризуйте изображение"
             }
         }
     }
