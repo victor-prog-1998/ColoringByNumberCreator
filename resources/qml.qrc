@@ -59,5 +59,6 @@
         <file>digits/large/8.png</file>
         <file>digits/large/9.png</file>
         <file>QML/PageFooter.qml</file>
+        <file>QML/CustomBusyIndicator.qml</file>
     </qresource>
 </RCC>

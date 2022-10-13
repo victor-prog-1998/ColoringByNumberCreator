@@ -12,20 +12,26 @@ ConfigManager* ImageProcessor::m_configManager;
 
 ImageProcessor::ImageProcessor(QObject *parent) : QObject(parent)
 {
-    mFindPaletteThread = new FindPaletteThread(this);
-    connect(mFindPaletteThread, &FindPaletteThread::finished,
+    m_findPaletteThread = new FindPaletteThread(this);
+    connect(m_findPaletteThread, &FindPaletteThread::finished,
             this, [this](const QStringList& palette) {
         emit this->findPaletteFinished(palette);
         emit this->message("Готово");
     });
 
-    mPosterizationThread = new PosterizationThread(this);
-    connect(mPosterizationThread, &PosterizationThread::finished,
+    m_posterizationThread = new PosterizationThread(this);
+    connect(m_posterizationThread, &PosterizationThread::finished,
             this, &ImageProcessor::posterizationFinishedSlot);
 
+    m_coloringThread = new ColoringThread(this);
+    m_coloringThread->setImageCreator(&m_imageCreator);
+    connect(m_coloringThread, &ColoringThread::finished,
+            this, &ImageProcessor::coloringFinishedSlot);
 
     //! Сигналы прогресса
-    connect(mPosterizationThread, &PosterizationThread::progress,
+    connect(m_posterizationThread, &PosterizationThread::progress,
+            this, &ImageProcessor::message);
+    connect(m_coloringThread, &ColoringThread::progress,
             this, &ImageProcessor::message);
 }
 
@@ -45,8 +51,8 @@ void ImageProcessor::posterize()
     QImage image = alreadyFiltered ? m_imageProvider->get("filtered") :
                                      m_currentImage;
 
-    mPosterizationThread->set(alreadyFiltered, image, m_colors);
-    mPosterizationThread->start();
+    m_posterizationThread->set(alreadyFiltered, image, m_colors);
+    m_posterizationThread->start();
 }
 
 bool ImageProcessor::setCurrentImage(const QString &source)
@@ -85,8 +91,8 @@ void ImageProcessor::findOptimalPalette(int colorsCount)
         message("Изображение не задано");
     }
     message("Идёт расчёт палитры");
-    mFindPaletteThread->set(m_currentImage, colorsCount);
-    mFindPaletteThread->start();
+    m_findPaletteThread->set(m_currentImage, colorsCount);
+    m_findPaletteThread->start();
 }
 
 void ImageProcessor::changeColor(int x, int y, const QColor &color)
@@ -123,31 +129,37 @@ void ImageProcessor::edges()
 void ImageProcessor::coloring()
 {
     if(m_imageProvider->contains("coloring"))
+    {
+        emit coloringFinished();
         return;
-    scalePosterizedImage();
-    edges();
-    QImage posterizedImage{m_imageProvider->get("scaled_posterized")};
-    QImage edgesImage{m_imageProvider->get("edges")};
+    }
+    bool scaledExists = m_imageProvider->contains("scaled_posterized");
+    bool edgesExists = m_imageProvider->contains("edges");
 
-    QMap<QString, int> colorsMap; // color -> id
-    QList<DataTypes::Area> areas;
-    Algorithms::findAreas(posterizedImage, edgesImage, areas, colorsMap);
+    m_coloringThread->setEdges(edgesExists);
+    m_coloringThread->setScaled(scaledExists);
+
+    QImage posterized = (edgesExists || scaledExists) ?
+                         m_imageProvider->get("scaled_posterized") :
+                         m_imageProvider->get("posterized");
+    m_coloringThread->setPosterizedImage(posterized);
+
+    if(edgesExists)
+    {
+        QImage edgesImage = m_imageProvider->get("edges");
+        m_coloringThread->setEdgesImage(edgesImage);
+    }
+    else if(!scaledExists)
+    {
+        int scalingFactor = m_configManager->scalingFactor();
+        m_coloringThread->setScalingFactor(scalingFactor);
+    }
 
     QColor coloringColor{m_configManager->coloringColor()};
-    m_imageCreator.setColoringColor(coloringColor);
+    m_coloringThread->setColoringColor(coloringColor);
+    m_coloringThread->setSimplification(m_configManager->simplify());
 
-    if(m_configManager->simplify())
-        m_imageCreator.createSimplifiedImages(posterizedImage, areas,
-                                              colorsMap);
-    else
-        m_imageCreator.createImages(posterizedImage, areas, colorsMap);
-    QImage coloringImage = m_imageCreator.getColoringImage();
-    QImage paintedImage = m_imageCreator.getPaintedImage();
-    QImage legend = m_imageCreator.getLegendImage();
-
-    m_imageProvider->add("coloring", coloringImage);
-    m_imageProvider->add("painted", paintedImage);
-    m_imageProvider->add("legend", legend);
+    m_coloringThread->start();
 }
 
 void ImageProcessor::removeEdgesFromProvider()
@@ -240,10 +252,23 @@ void ImageProcessor::scalePosterizedImage()
 
 void ImageProcessor::posterizationFinishedSlot()
 {
-    if(!mPosterizationThread->filtered())
-        m_imageProvider->add("filtered", mPosterizationThread->getFilteredImage());
-    m_imageProvider->add("posterized", mPosterizationThread->getPosterizedImage());
+    if(!m_posterizationThread->filtered())
+        m_imageProvider->add("filtered", m_posterizationThread->getFilteredImage());
+    m_imageProvider->add("posterized", m_posterizationThread->getPosterizedImage());
     emit posterizationFinished();
+    emit message("Готово");
+}
+
+void ImageProcessor::coloringFinishedSlot()
+{
+    if(!m_coloringThread->getScaled())
+        m_imageProvider->add("scaled_posterized", m_coloringThread->getScaledPosterized());
+    if(!m_coloringThread->getEdges())
+        m_imageProvider->add("edges", m_coloringThread->getEdgesImage());
+    m_imageProvider->add("coloring", m_imageCreator.getColoringImage());
+    m_imageProvider->add("painted", m_imageCreator.getPaintedImage());
+    m_imageProvider->add("legend", m_imageCreator.getLegendImage());
+    emit coloringFinished();
     emit message("Готово");
 }
 

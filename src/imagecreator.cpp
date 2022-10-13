@@ -154,10 +154,10 @@ QList<QPair<QImage, QString>> ImageCreator::tileColoringImage(int rows,
                                                               int columns) const
 {
     QList<QPair<QImage,QString>> tiles;
-    int tileWidth = std::ceil(static_cast<double>
-                              (m_coloringImage.width()) / columns);
-    int tileHeight = std::ceil(static_cast<double>
-                               (m_coloringImage.height()) / rows);
+    int tileWidth = static_cast<int>(std::ceil(static_cast<double>
+                              (m_coloringImage.width()) / columns));
+    int tileHeight = static_cast<int>(std::ceil(static_cast<double>
+                               (m_coloringImage.height()) / rows));
     int lastTileWidth = m_coloringImage.width() % tileWidth;
     if(lastTileWidth == 0) lastTileWidth = tileWidth;
     int lastTileHeight = m_coloringImage.height() % tileHeight;
@@ -266,7 +266,7 @@ void ImageCreator::_createLegend(const QMap<QString, int> &colorsMap)
     }
 }
 
-void ImageCreator::_drawNumber(int x, int y, uint8_t number, int size, QPainter& painter)
+void ImageCreator::_drawNumber(int x, int y, int number, int size, QPainter& painter)
 {
     int count = Algorithms::getCountOfDigits(number);
     int width = m_digits[size][0].width();

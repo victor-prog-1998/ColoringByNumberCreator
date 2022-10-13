@@ -76,6 +76,7 @@ SidePanel{
                 y: colorPalleteButton.y - height
                 onAccepted: {
                     imageProcessor.findOptimalPalette(value);
+                    pageFooter.busyIndicator.active = true;
                     colorsModel.clear();
                 }
             }

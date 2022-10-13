@@ -8,6 +8,7 @@
 #include "imagecreator.h"
 #include "findpalettethread.h"
 #include "posterizationthread.h"
+#include "coloringthread.h"
 
 /*!
  * \brief Класс высокого уровня, связвающий графический интерфейс на QML
@@ -81,10 +82,9 @@ public:
      */
     Q_INVOKABLE void edges();
     /*!
-     * \brief Создание изображений относящихся к раскраске
-     * \details Создает раскраску по номерам, готовое изображение
-     *          и легенду раскраски. Добавляет данные изображения
-     *          в провайдер.
+     * \brief   Запуск потока создания раскраски
+     * \details Поток создает раскраску по номерам, готовое изображение
+     *          и легенду раскраски.
      */
     Q_INVOKABLE void coloring();
     /*!
@@ -133,15 +133,24 @@ private:
     //!< Набор цветов раскраски
     QList<QColor> m_colors;
     //!< Поток расчёта палитры
-    FindPaletteThread *mFindPaletteThread;
+    FindPaletteThread *m_findPaletteThread;
     //!< Поток постеризации
-    PosterizationThread *mPosterizationThread;
+    PosterizationThread *m_posterizationThread;
+    //!< Поток создания раскраски
+    ColoringThread *m_coloringThread;
 private slots:
     /*!
      * \brief Слот, вызываемый при окончании работы потока постеризации
+     * \details Добавляет результаты в провайдер
+     *          и пробрасывает сигнал завершения
      */
     void posterizationFinishedSlot();
-
+    /*!
+     * \brief Слот, вызываемый при окончании работы потока создания раскраски
+     * \details Добавляет результаты в провайдер
+     *          и пробрасывает сигнал завершения
+     */
+    void coloringFinishedSlot();
 signals:
     /*!
      * \brief Сигнал завершения расчета палитры
@@ -152,6 +161,10 @@ signals:
      * \brief Сигнал завершения постеризации
      */
     void posterizationFinished();
+    /*!
+     * \brief Сигнал завершения создания раскраски
+     */
+    void coloringFinished();
     /*!
      * \brief Сигнал, передающий сообщение
      * \param message - строка с сообщением

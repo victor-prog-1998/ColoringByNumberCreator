@@ -14,7 +14,7 @@ void PosterizationThread::run()
         m_filteredImage = QImage(m_image.size(), m_image.format());
         emit progress("Подготовка: медианная фильтрация");
         Algorithms::medianFilter(m_image, m_filteredImage, 3, 2);
-        emit progress("Подготовка: усредняюшая фильтрация");
+        emit progress("Подготовка: усредняющая фильтрация");
         Algorithms::averagingFilter(m_filteredImage, m_filteredImage, 3, 2);
     }
     emit progress("Идёт постеризация");
@@ -26,18 +26,6 @@ void PosterizationThread::run()
     Algorithms::medianFilter(m_posterizedImage, m_posterizedImage, 3, 3);
 
     emit finished();
-    //    if(m_imageProvider->contains("filtered"))
-    //        filtered = m_imageProvider->get("filtered");
-    //    else
-    //    {
-    //        Algorithms::medianFilter(m_currentImage, filtered, 3, 2);
-    //        Algorithms::averagingFilter(filtered, filtered, 3, 2);
-    //        m_imageProvider->add("filtered", filtered);
-    //    }
-    //    Algorithms::posterize(filtered, posterized, m_colors);
-    //    Algorithms::medianFilter(posterized, posterized, 3, 3);
-
-    //    m_imageProvider->add("posterized", posterized);
 }
 
 void PosterizationThread::set(bool filtered, const QImage &image,

@@ -91,7 +91,7 @@ private:
      * \param[in] number - число
      * \param[in/out] painter - объект QPainter c заданным контекстом рисования
      */
-    void _drawNumber(int x, int y, uint8_t number, int size, QPainter &painter);
+    void _drawNumber(int x, int y, int number, int size, QPainter &painter);
     /*!
      * \brief Открытие изображений с цифрами (инициализация массива m_digits)
      */

@@ -10,14 +10,24 @@ Window {
         id: imageProcessor
         onFindPaletteFinished: {
             paletteSidePanel.setPalette(palette);
+            pageFooter.busyIndicator.active = false;
         }
         onPosterizationFinished: {
+            pageFooter.busyIndicator.active = false;
             paletteSidePanel.posterizationProcess = false;
             imageArea.source = "";
             imageArea.source = root.posterizedImageSource
             root.posterized = true;
             pageHeader.modeComboBox.currentIndex = pageHeader.modeComboBoxPosterizedlIndex;
         }
+        onColoringFinished: {
+            pageFooter.busyIndicator.active = false;
+            pageHeader.modeComboBox.currentIndex = pageHeader.modeComboBoxColoringIndex;
+            pageHeader.coloringComboBox.currentIndex = pageHeader.coloringComboBoxColoringIndex;
+            imageArea.source = "";
+            imageArea.source = root.coloringImageSource;
+        }
+
         onMessage: {
             pageFooter.footerText.text = message;
         }
@@ -26,7 +36,7 @@ Window {
     visible: true
     width: 640
     height: 480
-    title: qsTr("Создание раскрасок по номерам")
+    title: qsTr("<>..<>")
     property string imageOriginalSource
     property string posterizedImageSource: "image://provider/posterized"
     property string edgesImageSource: "image://provider/edges"
@@ -59,9 +69,9 @@ Window {
                 imageArea.source = root.posterizedImageSource;
                 break;
             case pageHeader.modeComboBoxColoringIndex:
+                pageFooter.busyIndicator.active = true;
                 imageProcessor.coloring();
-                coloringComboBox.currentIndex = pageHeader.coloringComboBoxColoringIndex;
-                imageArea.source = root.coloringImageSource;
+                break;
             }
         }
 
@@ -130,6 +140,7 @@ Window {
                 visible: false
                 onPosterizeButtonClicked: {
                     posterizationProcess = true;
+                    pageFooter.busyIndicator.active = true;
                     imageProcessor.setColors(paletteSidePanel.getColors())
                     imageProcessor.posterize();
                 }
@@ -145,38 +156,41 @@ Window {
             }
         }
 
-        ImageArea{
-            id: imageArea
-            changeColorMode: root.changeColorMode
-
+        Item{
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.left: sidePanelItem.right
-            onClicked: {
-                if(root.changeColorMode)
-                {
-                    imageProcessor.removeEdgesFromProvider();
-                    imageProcessor.removeColoringFromProvider();
-                    root.changeColorX = x;
-                    root.changeColorY = y;
-                    changeColorDialog.open();
-                }
-                else if(pageHeader.pencilMode)
-                {
-                    imageProcessor.removeEdgesFromProvider();
-                    imageProcessor.removeColoringFromProvider();
-                    imageArea.source = "";
-                    imageProcessor.setPixelColor(x, y, colorSidePanel.currentColor);
-                    imageArea.source = "image://provider/posterized";
-                }
-                else if(pageHeader.fillMode)
-                {
-                    imageProcessor.removeEdgesFromProvider();
-                    imageProcessor.removeColoringFromProvider();
-                    imageArea.source = "";
-                    imageProcessor.fill(x, y, colorSidePanel.currentColor);
-                    imageArea.source = "image://provider/posterized";
+            ImageArea{
+                id: imageArea
+                changeColorMode: root.changeColorMode
+
+                anchors.fill: parent
+                onClicked: {
+                    if(root.changeColorMode)
+                    {
+                        imageProcessor.removeEdgesFromProvider();
+                        imageProcessor.removeColoringFromProvider();
+                        root.changeColorX = x;
+                        root.changeColorY = y;
+                        changeColorDialog.open();
+                    }
+                    else if(pageHeader.pencilMode)
+                    {
+                        imageProcessor.removeEdgesFromProvider();
+                        imageProcessor.removeColoringFromProvider();
+                        imageArea.source = "";
+                        imageProcessor.setPixelColor(x, y, colorSidePanel.currentColor);
+                        imageArea.source = "image://provider/posterized";
+                    }
+                    else if(pageHeader.fillMode)
+                    {
+                        imageProcessor.removeEdgesFromProvider();
+                        imageProcessor.removeColoringFromProvider();
+                        imageArea.source = "";
+                        imageProcessor.fill(x, y, colorSidePanel.currentColor);
+                        imageArea.source = "image://provider/posterized";
+                    }
                 }
             }
         }
@@ -427,10 +441,8 @@ Window {
     {
         if(pageHeader.modeComboBox.currentIndex == pageHeader.modeComboBoxColoringIndex)
         {
+            pageFooter.busyIndicator.active = true;
             imageProcessor.coloring();
-            imageArea.source = "";
-            imageArea.source = root.coloringImageSource;
-            pageHeader.coloringComboBox.currentIndex = pageHeader.coloringComboBoxColoringIndex
         }
     }
 }
