@@ -76,12 +76,6 @@ public:
      */
     Q_INVOKABLE void fill(int x, int y, const QColor& fillColor);
     /*!
-     * \brief Создание изображения с границами областей
-     *        постеризованного изображения
-     * \details Результат добавляется в провайдер
-     */
-    Q_INVOKABLE void edges();
-    /*!
      * \brief   Запуск потока создания раскраски
      * \details Поток создает раскраску по номерам, готовое изображение
      *          и легенду раскраски.
@@ -115,12 +109,6 @@ public:
      */
     Q_INVOKABLE void saveResults(const QString& folderPath,
                                  int tileRows = 0, int tileColumns = 0);
-
-private:
-    /*!
-     * \brief Масштабирует постеризованное изображение и записывает в провайдер
-     */
-    void scalePosterizedImage();
 private:
     //!< Текущее изображение
     QImage m_currentImage;

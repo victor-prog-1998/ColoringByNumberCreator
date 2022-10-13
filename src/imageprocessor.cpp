@@ -37,19 +37,20 @@ ImageProcessor::ImageProcessor(QObject *parent) : QObject(parent)
 
 void ImageProcessor::posterize()
 {
-    if(m_imageProvider->contains("scaled_posterized"))
-        m_imageProvider->remove("scaled_posterized");
-    if(m_imageProvider->contains("edges"))
+    if(m_imageProvider->contains(ImageProvider::ScaledPosterized))
+        m_imageProvider->remove(ImageProvider::ScaledPosterized);
+    if(m_imageProvider->contains(ImageProvider::Edges))
         removeEdgesFromProvider();
-    if(m_imageProvider->contains("coloring"))
+    if(m_imageProvider->contains(ImageProvider::Coloring))
         removeColoringFromProvider();
 
     QImage filtered(m_currentImage.size(), QImage::Format_RGB888);
     QImage posterized(m_currentImage.size(), QImage::Format_RGB888);
 
-    bool alreadyFiltered = m_imageProvider->contains("filtered");
-    QImage image = alreadyFiltered ? m_imageProvider->get("filtered") :
-                                     m_currentImage;
+    bool alreadyFiltered = m_imageProvider->contains(ImageProvider::Filtered);
+    QImage image = alreadyFiltered ?
+                   m_imageProvider->get(ImageProvider::Filtered) :
+                   m_currentImage;
 
     m_posterizationThread->set(alreadyFiltered, image, m_colors);
     m_posterizationThread->start();
@@ -68,10 +69,10 @@ bool ImageProcessor::setCurrentImage(const QString &source)
         qDebug() << "ImageProcessor: Не удалось загрузить изображение";
         return false;
     }
-    if(m_imageProvider->contains("edges"))
-        m_imageProvider->remove("edges");
-    if(m_imageProvider->contains("filtered"))
-        m_imageProvider->remove("filtered");
+    if(m_imageProvider->contains(ImageProvider::Edges))
+        m_imageProvider->remove(ImageProvider::Edges);
+    if(m_imageProvider->contains(ImageProvider::Filtered))
+        m_imageProvider->remove(ImageProvider::Filtered);
     return true;
 }
 
@@ -97,56 +98,47 @@ void ImageProcessor::findOptimalPalette(int colorsCount)
 
 void ImageProcessor::changeColor(int x, int y, const QColor &color)
 {
-    QImage img = m_imageProvider->get("posterized");
+    QImage img = m_imageProvider->get(ImageProvider::Posterized);
     Algorithms::changeColor(img, x, y, color);
-    m_imageProvider->add("posterized", img);
+    m_imageProvider->add(ImageProvider::Posterized, img);
 }
 
 void ImageProcessor::setPixelColor(int x, int y, const QColor &color)
 {
-    QImage img = m_imageProvider->get("posterized");
+    QImage img = m_imageProvider->get(ImageProvider::Posterized);
     img.setPixelColor(x, y, color);
-    m_imageProvider->add("posterized", img);
+    m_imageProvider->add(ImageProvider::Posterized, img);
 }
 
 void ImageProcessor::fill(int x, int y, const QColor &fillColor)
 {
-    QImage img = m_imageProvider->get("posterized");
+    QImage img = m_imageProvider->get(ImageProvider::Posterized);
     Algorithms::fill(x, y, img, fillColor);
-    m_imageProvider->add("posterized", img);
-}
-
-void ImageProcessor::edges()
-{
-    if(m_imageProvider->contains("edges"))
-        return;
-    QImage posterized = m_imageProvider->get("scaled_posterized");
-
-    QImage edgesImage = Algorithms::makeEdgesImage(posterized);
-    m_imageProvider->add("edges", edgesImage);
+    m_imageProvider->add(ImageProvider::Posterized, img);
 }
 
 void ImageProcessor::coloring()
 {
-    if(m_imageProvider->contains("coloring"))
+    if(m_imageProvider->contains(ImageProvider::Coloring))
     {
         emit coloringFinished();
         return;
     }
-    bool scaledExists = m_imageProvider->contains("scaled_posterized");
-    bool edgesExists = m_imageProvider->contains("edges");
+    bool scaledExists = m_imageProvider->contains(
+                        ImageProvider::ScaledPosterized);
+    bool edgesExists = m_imageProvider->contains(ImageProvider::Edges);
 
     m_coloringThread->setEdges(edgesExists);
     m_coloringThread->setScaled(scaledExists);
 
     QImage posterized = (edgesExists || scaledExists) ?
-                         m_imageProvider->get("scaled_posterized") :
-                         m_imageProvider->get("posterized");
+                         m_imageProvider->get(ImageProvider::ScaledPosterized) :
+                         m_imageProvider->get(ImageProvider::Posterized);
     m_coloringThread->setPosterizedImage(posterized);
 
     if(edgesExists)
     {
-        QImage edgesImage = m_imageProvider->get("edges");
+        QImage edgesImage = m_imageProvider->get(ImageProvider::Edges);
         m_coloringThread->setEdgesImage(edgesImage);
     }
     else if(!scaledExists)
@@ -164,16 +156,16 @@ void ImageProcessor::coloring()
 
 void ImageProcessor::removeEdgesFromProvider()
 {
-    m_imageProvider->remove("edges");
+    m_imageProvider->remove(ImageProvider::Edges);
 }
 
 void ImageProcessor::removeColoringFromProvider()
 {
-    m_imageProvider->remove("scaled_posterized");
-    m_imageProvider->remove("edges");
-    m_imageProvider->remove("coloring");
-    m_imageProvider->remove("painted");
-    m_imageProvider->remove("legend");
+    m_imageProvider->remove(ImageProvider::ScaledPosterized);
+    m_imageProvider->remove(ImageProvider::Edges);
+    m_imageProvider->remove(ImageProvider::Coloring);
+    m_imageProvider->remove(ImageProvider::Painted);
+    m_imageProvider->remove(ImageProvider::Legend);
 }
 
 void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
@@ -184,7 +176,7 @@ void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
     path += '/';
 #endif
     path += folderPath + '/';
-    if(!m_imageProvider->contains("coloring"))
+    if(!m_imageProvider->contains(ImageProvider::Coloring))
         return;
     QImage coloring = m_imageProvider->get("coloring");
     QImage painted = m_imageProvider->get("painted");
@@ -211,50 +203,13 @@ void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
     }
 }
 
-void ImageProcessor::scalePosterizedImage()
-{
-    if(m_imageProvider->contains("scaled_posterized"))
-        return;
-    QImage posterized = m_imageProvider->get("posterized");
-    int scalingFactor = m_configManager->scalingFactor();
-    QImage scaledPosterized;
-    switch(scalingFactor)
-    {
-    case 2:
-        scaledPosterized = Algorithms::scaleImage2x(posterized);
-        break;
-    case 3:
-        scaledPosterized = Algorithms::scaleImage3x(posterized);
-        break;
-    case 4:
-        scaledPosterized = Algorithms::scaleImage2x(posterized, 2);
-        break;
-    case 6:
-        scaledPosterized = Algorithms::scaleImage2x(posterized);
-        scaledPosterized = Algorithms::scaleImage3x(scaledPosterized);
-        break;
-    case 8:
-        scaledPosterized = Algorithms::scaleImage2x(posterized, 3);
-        break;
-    case 9:
-        scaledPosterized = Algorithms::scaleImage3x(posterized, 2);
-        break;
-    case 12:
-        scaledPosterized = Algorithms::scaleImage3x(posterized);
-        scaledPosterized = Algorithms::scaleImage2x(scaledPosterized, 2);
-        break;
-    default:
-        scaledPosterized = posterized;
-        break;
-    }
-    m_imageProvider->add("scaled_posterized", scaledPosterized);
-}
-
 void ImageProcessor::posterizationFinishedSlot()
 {
     if(!m_posterizationThread->filtered())
-        m_imageProvider->add("filtered", m_posterizationThread->getFilteredImage());
-    m_imageProvider->add("posterized", m_posterizationThread->getPosterizedImage());
+        m_imageProvider->add(ImageProvider::Filtered,
+                             m_posterizationThread->getFilteredImage());
+    m_imageProvider->add(ImageProvider::Posterized,
+                         m_posterizationThread->getPosterizedImage());
     emit posterizationFinished();
     emit message("Готово");
 }
@@ -262,12 +217,17 @@ void ImageProcessor::posterizationFinishedSlot()
 void ImageProcessor::coloringFinishedSlot()
 {
     if(!m_coloringThread->getScaled())
-        m_imageProvider->add("scaled_posterized", m_coloringThread->getScaledPosterized());
+        m_imageProvider->add(ImageProvider::ScaledPosterized,
+                             m_coloringThread->getScaledPosterized());
     if(!m_coloringThread->getEdges())
-        m_imageProvider->add("edges", m_coloringThread->getEdgesImage());
-    m_imageProvider->add("coloring", m_imageCreator.getColoringImage());
-    m_imageProvider->add("painted", m_imageCreator.getPaintedImage());
-    m_imageProvider->add("legend", m_imageCreator.getLegendImage());
+        m_imageProvider->add(ImageProvider::Edges,
+                             m_coloringThread->getEdgesImage());
+    m_imageProvider->add(ImageProvider::Coloring,
+                         m_imageCreator.getColoringImage());
+    m_imageProvider->add(ImageProvider::Painted,
+                         m_imageCreator.getPaintedImage());
+    m_imageProvider->add(ImageProvider::Legend,
+                         m_imageCreator.getLegendImage());
     emit coloringFinished();
     emit message("Готово");
 }
