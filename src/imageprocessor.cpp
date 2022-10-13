@@ -66,7 +66,7 @@ bool ImageProcessor::setCurrentImage(const QString &source)
     QString src = source.right(source.size() - offset);
     if(!m_currentImage.load(src))
     {
-        qDebug() << "ImageProcessor: Не удалось загрузить изображение";
+        message("Не удалось загрузить изображение");
         return false;
     }
     if(m_imageProvider->contains(ImageProvider::Edges))
@@ -189,9 +189,10 @@ void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
     QString coloringPath = path + "coloring.png";
     QString paintedPath = path + "painted.png";
     QString legendPath = path + "legend.png";
-    coloring.save(coloringPath, "PNG");
-    painted.save(paintedPath, "PNG");
-    legend.save(legendPath, "PNG");
+    bool ok = true;
+    ok &= coloring.save(coloringPath, "PNG");
+    ok &= painted.save(paintedPath, "PNG");
+    ok &= legend.save(legendPath, "PNG");
     if(tileRows > 0)
     {
         dir.cd(folderName);
@@ -199,8 +200,12 @@ void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
         path += "tiled/";
         auto tiles = m_imageCreator.tileColoringImage(tileRows, tileColumns);
         for(const auto& tile: tiles)
-            tile.first.save(path + tile.second + ".png", "PNG");
+            ok &= tile.first.save(path + tile.second + ".png", "PNG");
     }
+    if(ok)
+        message("Сохранено");
+    else
+        message("При сохранении возникли ошибки");
 }
 
 void ImageProcessor::posterizationFinishedSlot()
