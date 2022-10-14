@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import "../js/Properties.js" as Properties
 
 Rectangle{
     id: root
@@ -28,8 +29,8 @@ Rectangle{
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: height
-        buttonColor: "navy"
-        hoverColor: "#0707a4"
+        buttonColor: Properties.customSpinBoxButtonColor
+        hoverColor: Properties.customSpinBoxButtonHoverColor
         text: "-"
         textColor: "white"
         onClicked: {
@@ -53,8 +54,8 @@ Rectangle{
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: height
-        buttonColor: "navy"
-        hoverColor: "#0707a4"
+        buttonColor: Properties.customSpinBoxButtonColor
+        hoverColor: Properties.customSpinBoxButtonHoverColor
         text: "+"
         textColor: "white"
         onClicked: {

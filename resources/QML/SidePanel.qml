@@ -1,13 +1,14 @@
 import QtQuick 2.0
 import QtQuick.Dialogs 1.2
 import QtQuick.Controls 2.3
+import "../js/Properties.js" as Properties
 
 Rectangle{
     id: root
     width: 200
 
     border.width: 1
-    color: "#dde7e8"
+    color: Properties.sidePanelColor
 
     property int minimumWidth: 100
     property int maximumWidth: 300

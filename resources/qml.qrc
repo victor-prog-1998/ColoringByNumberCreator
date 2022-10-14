@@ -60,5 +60,6 @@
         <file>digits/large/9.png</file>
         <file>QML/PageFooter.qml</file>
         <file>QML/CustomBusyIndicator.qml</file>
+        <file>js/Properties.js</file>
     </qresource>
 </RCC>

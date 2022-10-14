@@ -1,10 +1,11 @@
 import QtQuick 2.0
 import QtQuick.Controls 2.3
+import "../js/Properties.js" as Properties
 
 Rectangle{
     id: root
     height: 50
-    color: "#3ddb72"
+    color: Properties.backgroundColor
     property bool changeColorMode: false
     property bool pencilMode: false
     property bool fillMode: false

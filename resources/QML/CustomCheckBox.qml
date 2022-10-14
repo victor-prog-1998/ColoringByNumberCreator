@@ -1,5 +1,6 @@
 import QtQuick 2.10
 import QtQuick.Controls 2.3
+import "../js/Properties.js" as Properties
 
 CheckBox {
     id: control
@@ -21,7 +22,7 @@ CheckBox {
             height: width
             anchors.centerIn: parent
 //            radius: 2
-            color: "#137ea8"
+            color: Properties.customCheckBoxCheckedItemColor
             visible: control.checked
         }
     }
