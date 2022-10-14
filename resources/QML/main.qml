@@ -4,6 +4,7 @@ import QtQuick.Controls 2.3
 import QtQuick.Dialogs 1.2
 import QtQuick.Layouts 1.3
 import com.MyTypes.ImageProcessor 1.0
+import "../js/Properties.js" as Properties
 
 Window {
     ImageProcessor{
@@ -156,7 +157,8 @@ Window {
             }
         }
 
-        Item{
+        Rectangle{
+            color: Properties.backgroundColor
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.bottom: parent.bottom
@@ -201,7 +203,6 @@ Window {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        color: pageHeader.color
         footerText.text: "Откройте изображение"
         scaleText.text: Math.floor(imageArea.zoom * 100) + " %";
     }

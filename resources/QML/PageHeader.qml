@@ -5,7 +5,7 @@ import "../js/Properties.js" as Properties
 Rectangle{
     id: root
     height: 50
-    color: Properties.backgroundColor
+    color: Properties.headerColor
     property bool changeColorMode: false
     property bool pencilMode: false
     property bool fillMode: false

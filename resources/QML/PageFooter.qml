@@ -1,7 +1,9 @@
 import QtQuick 2.0
+import "../js/Properties.js" as Properties
 
 Rectangle{
     id: pageFooter
+    color: Properties.footerColor
     height: 30
     clip: true
     property alias footerText: footerText
