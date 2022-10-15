@@ -1,6 +1,6 @@
 #include "include/coloringthread.h"
 #include "include/algorithms.h"
-
+#include <QMap>
 ColoringThread::ColoringThread(QObject* parent): QThread(parent)
 {
 
