@@ -1,6 +1,6 @@
 import QtQuick 2.3
 import QtQuick.Window 2.3
-import QtQuick.Controls 2.3
+import QtQuick.Controls 2.12
 import QtQuick.Dialogs 1.2
 import QtQuick.Layouts 1.3
 import com.MyTypes.ImageProcessor 1.0

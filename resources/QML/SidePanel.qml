@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtQuick.Dialogs 1.2
-import QtQuick.Controls 2.3
+import QtQuick.Controls 2.12
 import "../js/Properties.js" as Properties
 
 Rectangle{

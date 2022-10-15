@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import QtQuick.Layouts 1.3
+import QtQuick.Layouts 1.12
 
 Item {
     id: root
