@@ -1,19 +1,30 @@
 import QtQuick 2.0
 import QtQuick.Dialogs 1.2
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.2
 
 SidePanel{
     id: root
     property alias colorsModel: colorsModel
+    property bool posterizationProcess: false
     signal posterizeButtonClicked()
     minimumWidth: 200
     title: "Палитра"
     function getColors()
     {
         let colors = [];
-        for(let i = 0; i < colorsModel.count; ++i)
+        for(var i = 0; i < colorsModel.count; ++i)
             colors.push(colorsModel.get(i)._color)
         return colors;
+    }
+    function setPalette(palette)
+    {
+        colorsModel.clear();
+        for(var i = 0; i < palette.length; ++i)
+        {
+            let obj = {};
+            obj._color = palette[i];
+            colorsModel.append(obj);
+        }
     }
 
     Item{
@@ -21,13 +32,18 @@ SidePanel{
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: resizeRect.left
+        anchors.topMargin: 4
+        anchors.bottomMargin: 4
+        anchors.rightMargin: 4
+        anchors.leftMargin: 6
 
         Rectangle{
+            color: "black"
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: buttonsColumn.top
-            anchors.margins: 3
+            anchors.bottomMargin: 3
             border.width: 1
             ScrollView{
                 anchors.fill: parent
@@ -55,7 +71,6 @@ SidePanel{
         Column{
             id: buttonsColumn
             spacing: 3
-            anchors.margins: 3
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.right: parent.right
@@ -63,39 +78,32 @@ SidePanel{
                 id: colorsCountPopup
                 x: colorPalleteButton.x
                 y: colorPalleteButton.y - height
+                width: parent.width
                 onAccepted: {
-                    let palette = imageProcessor.findOptimalPalette(value);
+                    imageProcessor.findOptimalPalette(value);
+                    pageFooter.busyIndicator.active = true;
                     colorsModel.clear();
-                    for(let i = 0; i < palette.length; ++i)
-                    {
-                        let obj = {};
-                        obj._color = palette[i];
-                        colorsModel.append(obj);
-                    }
                 }
             }
             CustomButton{
                 id: colorPalleteButton
                 width: parent.width
-                border.width: 1
                 text: "Рассчитать палитру"
                 onClicked: colorsCountPopup.open()
             }
             CustomButton{
                 id: addColorButton
                 width: parent.width
-                border.width: 1
                 text: "Добавить цвет"
                 onClicked: {
                     colorDialog.open();
                 }
             }
             CustomButton{
-                border.width: 1
                 width: parent.width
                 text: "Постеризовать"
                 onClicked: root.posterizeButtonClicked()
-                enabled: colorsModel.count > 1
+                enabled: !root.posterizationProcess && colorsModel.count > 1
             }
         }
     }

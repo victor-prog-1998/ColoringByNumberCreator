@@ -1,5 +1,6 @@
 import QtQuick 2.10
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.2
+import "../js/Properties.js" as Properties
 
 CheckBox {
     id: control
@@ -14,14 +15,14 @@ CheckBox {
         x: control.leftPadding
         y: parent.height / 2 - height / 2
 //        radius: 3
-        border.color: "black"
+        border.color: "white"
+        color: Properties.backgroundColor
 
         Rectangle {
-            width: 18
+            width: 16
             height: width
             anchors.centerIn: parent
-//            radius: 2
-            color: "#137ea8"
+            color: Properties.customCheckBoxCheckedItemColor
             visible: control.checked
         }
     }
@@ -30,7 +31,7 @@ CheckBox {
         text: control.text
         font: control.font
         opacity: enabled ? 1.0 : 0.3
-        color: enabled ? "black" : "gray"
+        color: enabled ? "white" : "darkgray"
         verticalAlignment: Text.AlignVCenter
         leftPadding: control.indicator.width + control.spacing
     }

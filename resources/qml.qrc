@@ -2,16 +2,12 @@
     <qresource prefix="/">
         <file>QML/main.qml</file>
         <file>QML/SidePanel.qml</file>
-        <file>icons/Arrow-Back.png</file>
-        <file>icons/Arrow-Forward.png</file>
         <file>QML/ImageButton.qml</file>
         <file>QML/PageHeader.qml</file>
         <file>QML/CustomButton.qml</file>
         <file>QML/ImageArea.qml</file>
         <file>QML/ColorBar.qml</file>
         <file>icons/delete-icon.png</file>
-        <file>icons/Next-icon.png</file>
-        <file>icons/Prev-icon.png</file>
         <file>QML/CustomSpinBox.qml</file>
         <file>QML/ColorCountPopup.qml</file>
         <file>QML/PaletteSidePanel.qml</file>
@@ -58,5 +54,10 @@
         <file>digits/large/7.png</file>
         <file>digits/large/8.png</file>
         <file>digits/large/9.png</file>
+        <file>QML/PageFooter.qml</file>
+        <file>QML/CustomBusyIndicator.qml</file>
+        <file>js/Properties.js</file>
+        <file>QML/CustomComboBox.qml</file>
+        <file>QML/SettingsDialog.qml</file>
     </qresource>
 </RCC>

@@ -1,10 +1,40 @@
-import QtQuick 2.12
-import QtQuick.Window 2.12
-import QtQuick.Controls 2.12
+import QtQuick 2.3
+import QtQuick.Window 2.3
+import QtQuick.Controls 2.2
 import QtQuick.Dialogs 1.2
-import QtQuick.Layouts 1.12
+import QtQuick.Layouts 1.3
+import com.MyTypes.ImageProcessor 1.0
+import "../js/Properties.js" as Properties
 
 Window {
+    ImageProcessor{
+        id: imageProcessor
+        onFindPaletteFinished: {
+            paletteSidePanel.setPalette(palette);
+            pageFooter.busyIndicator.active = false;
+        }
+        onPosterizationFinished: {
+            pageFooter.busyIndicator.active = false;
+            paletteSidePanel.posterizationProcess = false;
+            imageArea.source = "";
+            imageArea.source = root.posterizedImageSource
+            root.posterized = true;
+            pageHeader.modeComboBox.model = pageHeader.modeComboBoxShortModel;
+            pageHeader.modeComboBox.currentIndex = pageHeader.modeComboBoxPosterizedlIndex;
+        }
+        onColoringFinished: {
+            pageFooter.busyIndicator.active = false;
+            pageHeader.modeComboBox.model = pageHeader.modeComboBoxFullModel
+            pageHeader.modeComboBox.currentIndex = pageHeader.modeComboBoxColoringIndex;
+            pageHeader.coloringComboBox.currentIndex = pageHeader.coloringComboBoxColoringIndex;
+            imageArea.source = "";
+            imageArea.source = root.coloringImageSource;
+        }
+
+        onMessage: {
+            pageFooter.footerText.text = message;
+        }
+    }
     id: root
     visible: true
     width: 640
@@ -31,6 +61,8 @@ Window {
             settingsDialog.open()
         }
         onSaveButtonClicked: saveDialog.open()
+        createColoringButton.visible: root.posterized && modeComboBox.model.length < 3
+        modeComboBox.model: modeComboBoxShortModel
         modeComboBox.visible: root.posterized
         modeComboBox.onActivated: { // выбрано пользователем
             switch(index)
@@ -42,10 +74,15 @@ Window {
                 imageArea.source = root.posterizedImageSource;
                 break;
             case pageHeader.modeComboBoxColoringIndex:
+                pageFooter.busyIndicator.active = true;
                 imageProcessor.coloring();
-                coloringComboBox.currentIndex = pageHeader.coloringComboBoxColoringIndex;
-                imageArea.source = root.coloringImageSource;
+                break;
             }
+        }
+
+        createColoringButton.onClicked: {
+            pageFooter.busyIndicator.active = true;
+            imageProcessor.coloring()
         }
 
         coloringComboBox.onActivated: {
@@ -64,7 +101,7 @@ Window {
         }
 
         onChangeColorButtonClicked: {
-            footerText.text = changeColorMode ?
+            pageFooter.footerText.text = changeColorMode ?
                         "Укажите точку с цветом, который хотите заменить" : ""
         }
 
@@ -77,20 +114,20 @@ Window {
             {
                 paletteSidePanel.close()
                 colorSidePanel.open();
-                footerText.text = "Укажите пиксель, которому хотите задать выбранный цвет"
+                pageFooter.footerText.text = "Укажите пиксель, которому хотите задать выбранный цвет"
             }
             else
-                footerText.text = ""
+                pageFooter.footerText.text = ""
         }
         onFillModeChanged: {
             if(fillMode)
             {
                 paletteSidePanel.close()
                 colorSidePanel.open();
-                footerText.text = "Укажите область, которую хотите залить выбранным цветом"
+                pageFooter.footerText.text = "Укажите область, которую хотите залить выбранным цветом"
             }
             else
-                footerText.text = ""
+                pageFooter.footerText.text = ""
         }
     }
     Item{
@@ -112,13 +149,10 @@ Window {
                 anchors.bottom: parent.bottom
                 visible: false
                 onPosterizeButtonClicked: {
+                    posterizationProcess = true;
+                    pageFooter.busyIndicator.active = true;
                     imageProcessor.setColors(paletteSidePanel.getColors())
                     imageProcessor.posterize();
-                    footerText.text = ""
-                    imageArea.source = "";
-                    imageArea.source = root.posterizedImageSource
-                    root.posterized = true;
-                    pageHeader.modeComboBox.currentIndex = pageHeader.modeComboBoxPosterizedlIndex;
                 }
             }
 
@@ -132,66 +166,52 @@ Window {
             }
         }
 
-        ImageArea{
-            id: imageArea
-            changeColorMode: root.changeColorMode
-
+        Rectangle{
+            color: Properties.backgroundColor
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.left: sidePanelItem.right
-            onClicked: {
-                if(root.changeColorMode)
-                {
-                    imageProcessor.removeEdgesFromProvider();
-                    imageProcessor.removeColoringFromProvider();
-                    root.changeColorX = x;
-                    root.changeColorY = y;
-                    changeColorDialog.open();
-                }
-                else if(pageHeader.pencilMode)
-                {
-                    imageProcessor.removeEdgesFromProvider();
-                    imageProcessor.removeColoringFromProvider();
-                    imageArea.source = "";
-                    imageProcessor.setPixelColor(x, y, colorSidePanel.currentColor);
-                    imageArea.source = "image://provider/posterized";
-                }
-                else if(pageHeader.fillMode)
-                {
-                    imageProcessor.removeEdgesFromProvider();
-                    imageProcessor.removeColoringFromProvider();
-                    imageArea.source = "";
-                    imageProcessor.fill(x, y, colorSidePanel.currentColor);
-                    imageArea.source = "image://provider/posterized";
+            ImageArea{
+                id: imageArea
+                changeColorMode: root.changeColorMode
+
+                anchors.fill: parent
+                onClicked: {
+                    if(root.changeColorMode)
+                    {
+                        root.changeColorX = x;
+                        root.changeColorY = y;
+                        changeColorDialog.open();
+                    }
+                    else if(pageHeader.pencilMode)
+                    {
+                        pageHeader.modeComboBox.model = pageHeader.modeComboBoxShortModel;
+                        imageProcessor.removeColoringFromProvider();
+                        imageArea.source = "";
+                        imageProcessor.setPixelColor(x, y, colorSidePanel.currentColor);
+                        imageArea.source = "image://provider/posterized";
+                    }
+                    else if(pageHeader.fillMode)
+                    {
+                        pageHeader.modeComboBox.model = pageHeader.modeComboBoxShortModel;
+                        imageProcessor.removeColoringFromProvider();
+                        imageArea.source = "";
+                        imageProcessor.fill(x, y, colorSidePanel.currentColor);
+                        imageArea.source = "image://provider/posterized";
+                    }
                 }
             }
         }
     }
 
-    Rectangle{
+    PageFooter{
         id: pageFooter
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 30
-        color: pageHeader.color
-        Text{
-            id: footerText
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            font.pointSize: 11
-            text: "Откройте изображение"
-        }
-
-        Text{
-            anchors.bottom: parent.bottom
-            anchors.right: parent.right
-            anchors.margins: 10
-            font.pointSize: 9
-            text: Math.floor(imageArea.zoom * 100) + " %";
-        }
+        footerText.text: "Откройте изображение"
+        scaleText.text: Math.floor(imageArea.zoom * 100) + " %";
     }
 
     FileDialog{
@@ -203,10 +223,12 @@ Window {
             {
                 root.imageOriginalSource = imageArea.source = fileUrl
                 paletteSidePanel.open();
+                if(pageHeader.modeComboBox.model.length > 2)
+                    pageHeader.modeComboBox.model = pageHeader.modeComboBoxShortModel;
                 pageHeader.modeComboBox.currentIndex = pageHeader.modeComboBoxOriginalIndex;
                 pageHeader.paletteButton.visible = true;
                 root.posterized = false;
-                footerText.text = "Задайте палитру и постеризуйте изображение"
+                pageFooter.footerText.text = "Задайте палитру и постеризуйте изображение"
             }
         }
     }
@@ -221,73 +243,74 @@ Window {
         }
     }
 
-    MessageDialog{
-        id: messageDialog
-        visible: false
-    }
-
     Dialog{
         id: settingsDialog
         title: "Настройки"
         width: 420
-        height: 300
-        contentItem: Item {
+        height: 250
+        contentItem: Rectangle {
+            color: Properties.backgroundColor
             anchors.fill: parent
-            anchors.margins: 10
-            ColumnLayout{
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-                spacing: 5
-                Label{
-                    text: "Цвет контуров и цифр"
-                    font.pointSize: 12
-                }
-                ColorSelector{
-                    id: settingsColorSelector
-                }
-                CustomCheckBox{
-                    text: "Высокая детализация"
-                    id: highDetailizationCheckBox
-                }
-                CustomCheckBox{
-                    text: "Масштабирование раскраски"
-                    id: scalingCheckBox
-                }
-                Text{
-                    font.pixelSize: 10
-                    visible: scalingCheckBox.checked
-                    text: "Масштабирование позоляет увеличить конутура,\n" +
-                          "сделать их более гладкими и вместить больше числовых меток"
-                }
-
-                Row{
-                    visible: scalingCheckBox.checked
-                    width: parent.width
+            Item {
+                anchors.fill: parent
+                anchors.margins: 10
+                ColumnLayout{
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
                     spacing: 5
-                    Text{
-                        font.pointSize: 12
-                        text: "Коэффициент"
+                    Label{
+                        text: "Цвет контуров и цифр"
+                        color: "white"
+                        font.pointSize: 10
                     }
-                    CustomSpinBox{
-                        id: scalingSpinBox
-                        fixedValues: true
-                        values: [2, 3, 4, 6, 8, 9, 12]
+                    ColorSelector{
+                        id: settingsColorSelector
+                    }
+                    CustomCheckBox{
+                        text: "Высокая детализация"
+                        id: highDetailizationCheckBox
+                    }
+                    CustomCheckBox{
+                        text: "Масштабирование раскраски"
+                        id: scalingCheckBox
+                    }
+                    Text{
+                        font.pointSize: 9
+                        visible: scalingCheckBox.checked
+                        color: "#cccccc"
+                        text: "Масштабирование позоляет увеличить конутура,\n" +
+                              "сделать их более гладкими и вместить больше числовых меток"
+                    }
+                    Row{
+                        visible: scalingCheckBox.checked
+                        width: parent.width
+                        spacing: 5
+                        Text{
+                            font.pointSize: 10
+                            color: "white"
+                            text: "Коэффициент"
+                        }
+                        CustomSpinBox{
+                            id: scalingSpinBox
+                            fixedValues: true
+                            values: [2, 3, 4, 6, 8, 9, 12]
+                        }
                     }
                 }
-            }
-            CustomButton{
-                text: "Сохранить"
-                height: 30
-                width: 110
-                border.width: 1
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                onClicked: {
-                    saveSettings();
-                    imageProcessor.removeColoringFromProvider();
-                    settingsDialog.close();
-                    applySettings();
+                CustomButton{
+                    text: "Сохранить"
+                    height: 24
+                    width: 80
+                    border.width: 1
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    onClicked: {
+                        saveSettings();
+                        imageProcessor.removeColoringFromProvider();
+                        settingsDialog.close();
+                        applySettings();
+                    }
                 }
             }
         }
@@ -296,85 +319,94 @@ Window {
     Dialog{
         title: "Сохранение"
         id: saveDialog
-        width: 500
-        height: 300
-        contentItem: Item {
+        width: 400
+        height: 160
+        contentItem: Rectangle {
             anchors.fill: parent
-            anchors.margins: 10
-            Column{
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.left: parent.left
-                spacing: 5
-                Text{
-                    font.pointSize: 12
-                    text: "Папка сохранения"
-                    horizontalAlignment: Text.AlignLeft
-                }
-
-                RowLayout{
-                    width: parent.width
-                    TextField{
-                        id: folderTextField
-                        Layout.fillWidth: true
-                        selectByMouse: true
-                        font.pointSize: 10
-                        background: Rectangle{
-                            implicitHeight: 30
-                            border.color: "darkgray"
-                            border.width: 1
-                        }
-                    }
-                    CustomButton{
-                        text: "Открыть"
-                        height: 30
-                        border.width: 1
-                        onClicked: saveFileDialog.open()
-                    }
-                }
-                CustomCheckBox{
-                    id: tileCheckBox
-                    text: "Нарезка"
-                }
-                Row{
-                    visible: tileCheckBox.checked
-                    width: parent.width
+            color: Properties.backgroundColor
+            Item{
+                anchors.fill: parent
+                anchors.margins: 10
+                Column{
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.left: parent.left
                     spacing: 5
                     Text{
-                        font.pointSize: 12
-                        text: "По высоте"
+                        font.pointSize: 10
+                        color: "white"
+                        text: "Папка сохранения"
+                        horizontalAlignment: Text.AlignLeft
                     }
-                    CustomSpinBox{
-                        id: rowsTileSpinBox
-                        value: 2
-                        minimum: columnTileSpinBox.value > 1 ? 1 : 2
+
+                    RowLayout{
+                        width: parent.width
+                        TextField{
+                            id: folderTextField
+                            Layout.fillWidth: true
+                            selectByMouse: true
+                            font.pointSize: 10
+                            color: "white"
+//                            height: 24
+                            implicitHeight: 24
+                            background: Rectangle{
+                                height: 24
+                                border.color: "white"
+                                color: "transparent"
+                                border.width: 1
+                            }
+                        }
+                        CustomButton{
+                            text: "Открыть"
+                            onClicked: saveFileDialog.open()
+                        }
                     }
-                    Text{
-                        font.pointSize: 12
-                        text: "По длине"
+                    CustomCheckBox{
+                        id: tileCheckBox
+                        text: "Нарезка"
                     }
-                    CustomSpinBox{
-                        id: columnTileSpinBox
-                        value: 2
-                        minimum: rowsTileSpinBox.value > 1 ? 1 : 2
+                    Row{
+                        visible: tileCheckBox.checked
+                        width: parent.width
+                        spacing: 5
+                        Text{
+                            font.pointSize: 10
+                            color: "white"
+                            text: "По высоте"
+                        }
+                        CustomSpinBox{
+                            id: rowsTileSpinBox
+                            value: 2
+                            minimum: columnTileSpinBox.value > 1 ? 1 : 2
+                        }
+                        Text{
+                            font.pointSize: 10
+                            color: "white"
+                            text: "По длине"
+                        }
+                        CustomSpinBox{
+                            id: columnTileSpinBox
+                            value: 2
+                            minimum: rowsTileSpinBox.value > 1 ? 1 : 2
+                        }
                     }
                 }
-            }
-            CustomButton{
-                enabled: folderTextField.text.length > 0
-                text: "Сохранить"
-                height: 30
-                width: 110
-                border.width: 1
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                onClicked: {
-                    let folder = folderTextField.text;
-                    if(tileCheckBox.checked)
-                        imageProcessor.saveResults(folder, rowsTileSpinBox.value, columnTileSpinBox.value);
-                    else
-                        imageProcessor.saveResults(folder);
-                    saveDialog.close();
+                CustomButton{
+                    enabled: folderTextField.text.length > 0
+                    text: "Сохранить"
+                    height: 24
+                    width: 80
+                    border.width: 1
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    onClicked: {
+                        let folder = folderTextField.text;
+                        if(tileCheckBox.checked)
+                            imageProcessor.saveResults(folder, rowsTileSpinBox.value, columnTileSpinBox.value);
+                        else
+                            imageProcessor.saveResults(folder);
+                        saveDialog.close();
+                    }
                 }
             }
         }
@@ -384,10 +416,12 @@ Window {
         id: changeColorDialog
         title: "Укажите новый цвет"
         onAccepted: {
+            imageProcessor.removeColoringFromProvider();
             imageArea.source = "";
             imageProcessor.changeColor(root.changeColorX, root.changeColorY, color);
             imageArea.source = "image://provider/posterized";
             pageHeader.changeColorMode = false;
+            pageHeader.modeComboBox.model = pageHeader.modeComboBoxShortModel;
         }
         onRejected: {
             pageHeader.changeColorMode = false
@@ -421,7 +455,8 @@ Window {
     {
         let simplify = !highDetailizationCheckBox.checked;
         let coloringColor = settingsColorSelector.getCurrentColor();
-        let scalingFactor = scalingCheckBox.checked ? scalingSpinBox.value : 1
+        let scalingFactor = scalingCheckBox.checked ?
+                            scalingSpinBox.value : 1
         configManager.setConfigs(simplify, coloringColor, scalingFactor);
     }
 
@@ -429,10 +464,12 @@ Window {
     {
         if(pageHeader.modeComboBox.currentIndex == pageHeader.modeComboBoxColoringIndex)
         {
+            pageFooter.busyIndicator.active = true;
             imageProcessor.coloring();
-            imageArea.source = "";
-            imageArea.source = root.coloringImageSource;
-            pageHeader.coloringComboBox.currentIndex = pageHeader.coloringComboBoxColoringIndex
+        }
+        else
+        {
+            pageHeader.modeComboBox.model = pageHeader.modeComboBoxShortModel;
         }
     }
 }

@@ -6,6 +6,9 @@
 #include "imageprovider.h"
 #include "configmanager.h"
 #include "imagecreator.h"
+#include "findpalettethread.h"
+#include "posterizationthread.h"
+#include "coloringthread.h"
 
 /*!
  * \brief Класс высокого уровня, связвающий графический интерфейс на QML
@@ -20,12 +23,12 @@ public:
      * \brief Установка провайдера изображений
      * \param[in] provider - провайдер
      */
-    void setImageProvider(ImageProvider* provider) {m_imageProvider = provider;}
+    static void setImageProvider(ImageProvider* provider) {m_imageProvider = provider;}
     /*!
      * \brief Установка менеджера настроек
      * \param[in] configManager - менеджер настроек
      */
-    void setConfigManager(ConfigManager* configManager)
+    static void setConfigManager(ConfigManager* configManager)
                          {m_configManager = configManager;}
     /*!
      * \brief Постеризация текущего изображения
@@ -46,10 +49,10 @@ public:
     /*!
      * \brief Нахождение оптимальной палитры постеризации
      *        по указанному числу цветов
+     * \details Запускает поток расчёта палитры
      * \param[in] colorsCount - число цветов
-     * \return
      */
-    Q_INVOKABLE QStringList findOptimalPalette(int colorsCount);
+    Q_INVOKABLE void findOptimalPalette(int colorsCount);
     /*!
      * \brief Замена цвета на постеризованном изображении с цвета
      *        указанного пикселя на новый цвет
@@ -73,16 +76,9 @@ public:
      */
     Q_INVOKABLE void fill(int x, int y, const QColor& fillColor);
     /*!
-     * \brief Создание изображения с границами областей
-     *        постеризованного изображения
-     * \details Результат добавляется в провайдер
-     */
-    Q_INVOKABLE void edges();
-    /*!
-     * \brief Создание изображений относящихся к раскраске
-     * \details Создает раскраску по номерам, готовое изображение
-     *          и легенду раскраски. Добавляет данные изображения
-     *          в провайдер.
+     * \brief   Запуск потока создания раскраски
+     * \details Поток создает раскраску по номерам, готовое изображение
+     *          и легенду раскраски.
      */
     Q_INVOKABLE void coloring();
     /*!
@@ -113,25 +109,55 @@ public:
      */
     Q_INVOKABLE void saveResults(const QString& folderPath,
                                  int tileRows = 0, int tileColumns = 0);
-
-private:
-    /*!
-     * \brief Масштабирует постеризованное изображение и записывает в провайдер
-     */
-    void scalePosterizedImage();
 private:
     //!< Текущее изображение
     QImage m_currentImage;
     //!< Провайдер изображений
-    ImageProvider *m_imageProvider;
+    static  ImageProvider *m_imageProvider;
     //!< Менеджер настроек
-    ConfigManager *m_configManager;
+    static ConfigManager *m_configManager;
     //!< Объект класса для создания результатов (раскраски)
     ImageCreator m_imageCreator;
     //!< Набор цветов раскраски
     QList<QColor> m_colors;
+    //!< Поток расчёта палитры
+    FindPaletteThread *m_findPaletteThread;
+    //!< Поток постеризации
+    PosterizationThread *m_posterizationThread;
+    //!< Поток создания раскраски
+    ColoringThread *m_coloringThread;
+private slots:
+    /*!
+     * \brief Слот, вызываемый при окончании работы потока постеризации
+     * \details Добавляет результаты в провайдер
+     *          и пробрасывает сигнал завершения
+     */
+    void posterizationFinishedSlot();
+    /*!
+     * \brief Слот, вызываемый при окончании работы потока создания раскраски
+     * \details Добавляет результаты в провайдер
+     *          и пробрасывает сигнал завершения
+     */
+    void coloringFinishedSlot();
 signals:
-
+    /*!
+     * \brief Сигнал завершения расчета палитры
+     * \param palette - палитра в виде списка строк с именами цветов
+     */
+    void findPaletteFinished(const QStringList& palette);
+    /*!
+     * \brief Сигнал завершения постеризации
+     */
+    void posterizationFinished();
+    /*!
+     * \brief Сигнал завершения создания раскраски
+     */
+    void coloringFinished();
+    /*!
+     * \brief Сигнал, передающий сообщение
+     * \param message - строка с сообщением
+     */
+    void message(const QString& message);
 };
 
 #endif // IMAGEPROCESSOR_H

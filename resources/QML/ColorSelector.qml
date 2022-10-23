@@ -1,5 +1,6 @@
 import QtQuick 2.0
-import QtQuick.Layouts 1.12
+import QtQuick.Layouts 1.3
+import "../js/Properties.js" as Properties
 
 Item {
     id: root
@@ -9,7 +10,7 @@ Item {
 
     function setCurrentColor(colorName)
     {
-        for(let i = 0; i < colorsModel.count; ++i)
+        for(var i = 0; i < colorsModel.count; ++i)
         {
             let col = colorsModel.get(i)._color;
             if(col === colorName)
@@ -35,7 +36,7 @@ Item {
                 width: 32
                 color: _color
                 border.width: index == root.currentIndex ? 4 : 1
-                border.color: index == root.currentIndex ? "#238df1" : "black"
+                border.color: index == root.currentIndex ? Properties.colorSelectorHightlightColor : "white"
                 MouseArea{
                     anchors.fill: parent
                     onClicked: root.currentIndex = index;
