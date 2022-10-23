@@ -3,10 +3,11 @@ import "../js/Properties.js" as Properties
 
 Rectangle{
     id: root
-    height: 30
-    width: 100
-    color: "white"
+    height: 24
+    width: 75
+    color: Properties.backgroundColor
     border.width: 1
+    border.color: "white"
     property int value: 0
     property int minimum: 0
     property int maximum: 100
@@ -21,8 +22,9 @@ Rectangle{
 
     Text{
         anchors.centerIn: parent
-        font.pointSize: 12
+        font.pointSize: 10
         text: root.value
+        color: "white"
     }
     CustomButton{
         anchors.left: parent.left

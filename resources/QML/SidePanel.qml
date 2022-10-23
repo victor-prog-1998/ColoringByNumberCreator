@@ -1,12 +1,11 @@
 import QtQuick 2.0
 import QtQuick.Dialogs 1.2
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.2
 import "../js/Properties.js" as Properties
 
 Rectangle{
     id: root
     width: 200
-
     border.width: 1
     color: Properties.sidePanelColor
 
@@ -33,13 +32,16 @@ Rectangle{
         anchors.top: parent.top
         anchors.right: resizeRect.left
         anchors.left: parent.left
-        anchors.margins: 2
-        height: 25
+        anchors.topMargin: 2
+        anchors.leftMargin: 6
+        anchors.rightMargin: 2
+        height: 16
         Text{
             id: txt
             anchors.top: parent.top
             anchors.left: parent.left
-            font.pointSize: 12
+            font.pointSize: 10
+            color: "white"
         }
 
         ImageButton{

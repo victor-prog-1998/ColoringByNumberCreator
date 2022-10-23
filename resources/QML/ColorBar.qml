@@ -3,6 +3,7 @@ import QtQuick 2.0
 Rectangle{
     id: root
     border.width: 1
+    border.color: "white"
     width: 40;
     height: width
     property bool small: false

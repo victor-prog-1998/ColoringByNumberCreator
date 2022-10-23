@@ -1,10 +1,10 @@
 import QtQuick 2.0
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.2
 import "../js/Properties.js" as Properties
 
 Rectangle{
     id: root
-    height: 50
+    height: 28
     color: Properties.headerColor
     property bool changeColorMode: false
     property bool pencilMode: false
@@ -22,9 +22,13 @@ Rectangle{
     signal settingsButtonClicked()
     signal changeColorButtonClicked()
 
+    property var modeComboBoxShortModel: ["Оригинал", "Постеризация"]
+    property var modeComboBoxFullModel: ["Оригинал", "Постеризация", "Раскраска"]
+
     property alias modeComboBox: modeComboBox
     property alias paletteButton: paletteButton
     property alias coloringComboBox: coloringComboBox
+    property alias createColoringButton: createColoringButton
 
     onChangeColorModeChanged: {
         if(changeColorMode)
@@ -105,10 +109,16 @@ Rectangle{
             visible: false
         }
 
-        ComboBox{
+        CustomComboBox{
             id: modeComboBox
-            model: ["Оригинал", "Постеризация", "Раскраска"]
-            height: 48
+            height: 24
+        }
+
+        CustomButton{
+            id: createColoringButton
+            text: "Создать раскраску"
+            width: 120
+            border.color: Properties.createColoringButtonBorderColor
         }
 
         ImageButton{
@@ -135,11 +145,11 @@ Rectangle{
             onClicked: root.pencilMode = true
         }
 
-        ComboBox{
+        CustomComboBox{
             id: coloringComboBox
             visible: modeComboBox.currentIndex == root.modeComboBoxColoringIndex
             model: ["Раскраска по номерам", "Готовое изображение", "Легенда"]
-            height: 48
+            height: 24
             width: 200
         }
     }

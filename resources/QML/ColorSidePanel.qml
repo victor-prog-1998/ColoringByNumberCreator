@@ -10,10 +10,12 @@ SidePanel{
         anchors.top: header.bottom
         anchors.left: parent.left
         anchors.right: resizeRect.left
+        anchors.margins: 3
         spacing: 5
         Rectangle{
             width: parent.width
             border.width: 1
+            border.color: "white"
             height: 36
             color: root.currentColor
             anchors.margins: 3

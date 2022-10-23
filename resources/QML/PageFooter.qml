@@ -16,6 +16,7 @@ Rectangle{
         anchors.left: parent.left
         anchors.leftMargin: 10
         font.pointSize: 11
+        color: Properties.footerTextColor
     }
 
     CustomBusyIndicator{
@@ -31,5 +32,6 @@ Rectangle{
         anchors.right: parent.right
         anchors.margins: 10
         font.pointSize: 9
+        color: Properties.footerTextColor
     }
 }

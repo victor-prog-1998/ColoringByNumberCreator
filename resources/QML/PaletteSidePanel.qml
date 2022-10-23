@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtQuick.Dialogs 1.2
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.2
 
 SidePanel{
     id: root
@@ -32,13 +32,18 @@ SidePanel{
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: resizeRect.left
+        anchors.topMargin: 4
+        anchors.bottomMargin: 4
+        anchors.rightMargin: 4
+        anchors.leftMargin: 6
 
         Rectangle{
+            color: "black"
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: buttonsColumn.top
-            anchors.margins: 3
+            anchors.bottomMargin: 3
             border.width: 1
             ScrollView{
                 anchors.fill: parent
@@ -66,7 +71,6 @@ SidePanel{
         Column{
             id: buttonsColumn
             spacing: 3
-            anchors.margins: 3
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.right: parent.right
@@ -74,6 +78,7 @@ SidePanel{
                 id: colorsCountPopup
                 x: colorPalleteButton.x
                 y: colorPalleteButton.y - height
+                width: parent.width
                 onAccepted: {
                     imageProcessor.findOptimalPalette(value);
                     pageFooter.busyIndicator.active = true;
@@ -83,21 +88,18 @@ SidePanel{
             CustomButton{
                 id: colorPalleteButton
                 width: parent.width
-                border.width: 1
                 text: "Рассчитать палитру"
                 onClicked: colorsCountPopup.open()
             }
             CustomButton{
                 id: addColorButton
                 width: parent.width
-                border.width: 1
                 text: "Добавить цвет"
                 onClicked: {
                     colorDialog.open();
                 }
             }
             CustomButton{
-                border.width: 1
                 width: parent.width
                 text: "Постеризовать"
                 onClicked: root.posterizeButtonClicked()
