@@ -8,7 +8,7 @@ Rectangle{
     property int currentIndex: 0
     property bool down: false
     signal activated(var index)
-
+    opacity: enabled ? 1.0 : 0.7
     MouseArea{
         anchors.fill: parent
         onClicked: {
@@ -96,82 +96,3 @@ Rectangle{
         }
     }
 }
-
-//ComboBox {
-//        id: root
-//        currentIndex: -1
-//        rightPadding: 6
-//        background: Rectangle{
-//            color: Properties.headerColor
-//            border.width: 1
-//            border.color: "white"
-//        }
-
-//        indicator: Canvas {
-//                id: canvas
-//                x: root.width - width - root.rightPadding
-//                y: root.topPadding + (root.availableHeight - height) / 2
-//                width: 12
-//                height: 8
-//                contextType: "2d"
-//                rotation: root.popup.visible ? 180 : 0
-
-//                Connections {
-//                    target: root
-//                    function onPressedChanged() { canvas.requestPaint(); }
-//                }
-
-//                onPaint: {
-//                    context.reset();
-//                    context.moveTo(0, 0);
-//                    context.lineTo(width, 0);
-//                    context.lineTo(width / 2, height);
-//                    context.closePath();
-//                    context.strokeStyle = "white"
-//                    context.stroke();
-//                }
-//        }
-
-
-//        contentItem: Text {
-//                leftPadding: 10
-//                rightPadding: root.indicator.width + root.spacing
-//                text: root.displayText
-//                font: root.font
-//                color: Properties.headerTextColor
-//                verticalAlignment: Text.AlignVCenter
-//                elide: Text.ElideRight
-//            }
-
-//        delegate: ItemDelegate {
-//                width: root.width
-//                implicitHeight: 32
-//                contentItem: Text {
-//                    text: modelData
-//                    font: root.font
-//                    color: "white"
-//                    elide: Text.ElideRight
-//                    verticalAlignment: Text.AlignVCenter
-//                }
-//                highlighted: root.highlightedIndex === index
-//            }
-
-//        popup: Popup {
-//                y: root.height - 1
-//                width: root.width
-//                implicitHeight: contentItem.implicitHeight
-//                padding: 1
-//                contentItem: ListView {
-//                    clip: true
-//                    implicitHeight: contentHeight
-//                    model: root.popup.visible ? root.delegateModel : null
-//                    currentIndex: root.highlightedIndex
-//                    ScrollIndicator.vertical: ScrollIndicator { }
-//                }
-//                background: Rectangle {
-//                    color: Properties.headerColor
-//                    border.color: "white"
-//                    radius: 2
-//                }
-//            }
-//    }

@@ -6,6 +6,7 @@ SidePanel{
     id: root
     property alias colorsModel: colorsModel
     property bool posterizationProcess: false
+    property bool findPaletteProcess: false
     signal posterizeButtonClicked()
     minimumWidth: 200
     title: "Палитра"
@@ -76,25 +77,28 @@ SidePanel{
             anchors.right: parent.right
             ColorCountPopup{
                 id: colorsCountPopup
-                x: colorPalleteButton.x
-                y: colorPalleteButton.y - height
+                x: calcPaletteButton.x
+                y: calcPaletteButton.y - height
                 width: parent.width
                 onAccepted: {
+                    root.findPaletteProcess = true;
                     imageProcessor.findOptimalPalette(value);
                     pageFooter.busyIndicator.active = true;
                     colorsModel.clear();
                 }
             }
             CustomButton{
-                id: colorPalleteButton
+                id: calcPaletteButton
                 width: parent.width
                 text: "Рассчитать палитру"
+                enabled: !root.findPaletteProcess && !root.posterizationProcess
                 onClicked: colorsCountPopup.open()
             }
             CustomButton{
                 id: addColorButton
                 width: parent.width
                 text: "Добавить цвет"
+                enabled: !root.findPaletteProcess && !root.posterizationProcess
                 onClicked: {
                     colorDialog.open();
                 }

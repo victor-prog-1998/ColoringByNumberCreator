@@ -17,7 +17,6 @@ Rectangle{
     property int coloringComboBoxLegendIndex: 2
     signal openButtonClicked()
     signal saveButtonClicked()
-    signal edgesButtonClicked()
     signal paletteButtonClicked()
     signal settingsButtonClicked()
     signal changeColorButtonClicked()
@@ -25,10 +24,16 @@ Rectangle{
     property var modeComboBoxShortModel: ["Оригинал", "Постеризация"]
     property var modeComboBoxFullModel: ["Оригинал", "Постеризация", "Раскраска"]
 
-    property alias modeComboBox: modeComboBox
     property alias paletteButton: paletteButton
+    property alias modeComboBox: modeComboBox
     property alias coloringComboBox: coloringComboBox
+    property alias settingsButton: settingsImageButton
+    property alias saveButton: saveButton
+    property alias openButton: openImageButton
     property alias createColoringButton: createColoringButton
+    property alias pencilButton: pencilButton
+    property alias changeColorButton: changeColorButton
+    property alias fillButton: fillButton
 
     onChangeColorModeChanged: {
         if(changeColorMode)

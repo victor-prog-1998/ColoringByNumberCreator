@@ -11,6 +11,7 @@ Window {
         id: imageProcessor
         onFindPaletteFinished: {
             paletteSidePanel.setPalette(palette);
+            paletteSidePanel.findPaletteProcess = false;
             pageFooter.busyIndicator.active = false;
         }
         onPosterizationFinished: {
@@ -29,6 +30,7 @@ Window {
             pageHeader.coloringComboBox.currentIndex = pageHeader.coloringComboBoxColoringIndex;
             imageArea.source = "";
             imageArea.source = root.coloringImageSource;
+            createColoringProcess = false;
         }
 
         onMessage: {
@@ -50,6 +52,7 @@ Window {
     property int changeColorX
     property int changeColorY
     property bool posterized: false
+    property bool createColoringProcess: false
     PageHeader{
         id: pageHeader
         anchors.top: parent.top
@@ -62,8 +65,19 @@ Window {
         }
         onSaveButtonClicked: saveDialog.open()
         createColoringButton.visible: root.posterized && modeComboBox.model.length < 3
+        createColoringButton.enabled: !paletteSidePanel.findPaletteProcess &&
+                                      !paletteSidePanel.posterizationProcess &&
+                                      !root.createColoringProcess
+        openButton.enabled: createColoringButton.enabled
+        settingsButton.enabled: !root.createColoringProcess
+        saveButton.enabled: !root.createColoringProcess
+        pencilButton.enabled: !root.createColoringProcess
+        fillButton.enabled: !root.createColoringProcess
+        changeColorButton.enabled: !root.createColoringProcess
         modeComboBox.model: modeComboBoxShortModel
         modeComboBox.visible: root.posterized
+        modeComboBox.enabled: !root.createColoringProcess || modeComboBox.model.length < 3
+        coloringComboBox.enabled: modeComboBox.enabled
         modeComboBox.onActivated: { // выбрано пользователем
             switch(index)
             {
@@ -74,15 +88,17 @@ Window {
                 imageArea.source = root.posterizedImageSource;
                 break;
             case pageHeader.modeComboBoxColoringIndex:
-                pageFooter.busyIndicator.active = true;
                 imageProcessor.coloring();
                 break;
             }
         }
 
         createColoringButton.onClicked: {
+            pageHeader.pencilMode = pageHeader.fillMode = pageHeader.changeColorMode = false;
+            colorSidePanel.close();
             pageFooter.busyIndicator.active = true;
-            imageProcessor.coloring()
+            imageProcessor.coloring();
+            createColoringProcess = true;
         }
 
         coloringComboBox.onActivated: {
@@ -141,13 +157,16 @@ Window {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.left: parent.left
-            width: paletteSidePanel.visible ? paletteSidePanel.width : colorSidePanel.visible ? colorSidePanel.width : 0
+            width: paletteSidePanel.visible ? paletteSidePanel.width :
+                                              colorSidePanel.visible ?
+                                              colorSidePanel.width : 0
             PaletteSidePanel{
                 id: paletteSidePanel
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 visible: false
+                enabled: !root.createColoringProcess
                 onPosterizeButtonClicked: {
                     posterizationProcess = true;
                     pageFooter.busyIndicator.active = true;
@@ -347,7 +366,6 @@ Window {
                             selectByMouse: true
                             font.pointSize: 10
                             color: "white"
-//                            height: 24
                             implicitHeight: 24
                             background: Rectangle{
                                 height: 24
@@ -464,6 +482,7 @@ Window {
     {
         if(pageHeader.modeComboBox.currentIndex == pageHeader.modeComboBoxColoringIndex)
         {
+            root.createColoringProcess = true;
             pageFooter.busyIndicator.active = true;
             imageProcessor.coloring();
         }
