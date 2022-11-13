@@ -33,12 +33,12 @@ void ColoringThread::run()
     emit progress("Нахождение областей");
     Algorithms::findAreas(m_posterizedImage, m_edgesImage, areas, colorsMap);
     m_imageCreator->setColoringColor(m_color);
+    m_imageCreator->setColorsMap(colorsMap);
     emit progress("Создание раскраски");
     if(m_simplification)
-        m_imageCreator->createSimplifiedImages(m_posterizedImage, areas,
-                                              colorsMap);
+        m_imageCreator->createSimplifiedImages(m_posterizedImage, areas);
     else
-        m_imageCreator->createImages(m_posterizedImage, areas, colorsMap);
+        m_imageCreator->createImages(m_posterizedImage, areas);
 
     emit finished();
 }

@@ -1,6 +1,7 @@
 #ifndef IMAGECREATOR_H
 #define IMAGECREATOR_H
 #include <QImage>
+#include <QMap>
 #include "algorithms.h"
 
 /*!
@@ -16,21 +17,17 @@ public:
      *        с высокой детализацией
      * \param[in] posterized - постеризованное изображение
      * \param[in] areas - набор областей
-     * \param[in] colorsMap - набор пар "цвет (строка) - id цвета"
      */
     void createImages(const QImage& posterized,
-                      const QList<DataTypes::Area>& areas,
-                      const QMap<QString, int>& colorsMap);
+                      const QList<DataTypes::Area>& areas);
     /*!
      * \brief Создание изображений, относящихся к раскраске,
      *        с упрощенной детализацией
      * \param[in] posterized - постеризованное изображение
      * \param[in] areas - набор областей
-     * \param[in] colorsMap - набор пар "цвет (строка) - id цвета"
      */
     void createSimplifiedImages(const QImage& posterized,
-                                const QList<DataTypes::Area>& areas,
-                                const QMap<QString, int>& colorsMap);
+                                const QList<DataTypes::Area>& areas);
     /*!
      * \brief Возвращает изображение с раскраской по номерам
      * \return изображение
@@ -59,11 +56,27 @@ public:
     QList<QPair<QImage, QString>> tileColoringImage(int rows,
                                                     int columns) const;
     /*!
-     * \brief setColoringColor - Установка цвета контуров и цифр на раскраске
+     * \brief Создание изображений с цветовыми картами
+     * \details Цветовая карта представляет собой изображение,
+     *          схожее с раскраской. Области, которые имеют цвет,
+     *          соответствующий карте, выделены белым цветом.
+     *          Остальные области - темным цветом.
+     *          Имя изображения цветовой карты является
+     *          числом - цветовой меткой цвета.
+     * \return Набор пар "Изображение - Имя изображения"
+     */
+    QList<QPair<QImage, QString>> makeColorMapsImages() const;
+    /*!
+     * \brief Установка цвета контуров и цифр на раскраске
      * \param[in] color - цвет
      */
     void setColoringColor(const QColor& color);
-
+    /*!
+     * \brief Задание цветовой палитры раскраски
+     * \param[in] colorsMap - палитра: набор пар "цвет (строка) - id цвета"
+     */
+    void setColorsMap(const QMap<QString, int>& colorsMap);
+    
 private:
     /*!
      * \brief Получение ширины числа [пикс]
@@ -80,10 +93,8 @@ private:
     void _drawContour(QImage& image, const QList<QPoint>& points);
     /*!
      * \brief Создание изображения с легендой раскраски
-     * \param[in] colorsMap - набор, в котором каждому цвету поставлена
-     *            в соответствие числовая метка
      */
-    void _createLegend(const QMap<QString, int>& colorsMap);
+    void _createLegend();
     /*!
      * \brief Отрисовка числовой метки
      * \param[in] x - координата Х метки
@@ -109,6 +120,8 @@ private:
     QImage m_digits[3][10];
     //!< Цвет контуров и цифр на раскраске
     QColor m_coloringColor{Qt::black};
+    //!< Набор пар "цвет (строка) - id цвета" (палитра раскраски)
+    QMap<QString, int> m_colorsMap;
 };
 
 #endif // IMAGECREATOR_H

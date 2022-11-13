@@ -104,10 +104,13 @@ public:
      *          Цифры начинаются с "1" и возрастают по горизонтали для
      *          фрагментов, от левым к правым.
      * \param[in] folderPath - папка сохранения результатов
+     * \param[in] makeColorMaps - создание изображений с
+     *            цветовыми картами
      * \param[in] tileRows - нарезка по вертикали
      * \param[in] tileColumns - нарезка по горизонтали
      */
     Q_INVOKABLE void saveResults(const QString& folderPath,
+                                 bool makeColorMaps,
                                  int tileRows = 0, int tileColumns = 0);
 private:
     //!< Текущее изображение

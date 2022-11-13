@@ -168,8 +168,9 @@ void ImageProcessor::removeColoringFromProvider()
     m_imageProvider->remove(ImageProvider::Legend);
 }
 
-void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
-                                 int tileColumns)
+void ImageProcessor::saveResults(const QString& folderPath,
+                                 bool makeColorMaps,
+                                 int tileRows, int tileColumns)
 {
     QString path;
 #ifdef __linux__
@@ -193,14 +194,22 @@ void ImageProcessor::saveResults(const QString& folderPath, int tileRows,
     ok &= coloring.save(coloringPath, "PNG");
     ok &= painted.save(paintedPath, "PNG");
     ok &= legend.save(legendPath, "PNG");
+    dir.cd(folderName);
     if(tileRows > 0)
     {
-        dir.cd(folderName);
         dir.mkdir("tiled");
-        path += "tiled/";
+        QString tiledPath = path + "tiled/";
         auto tiles = m_imageCreator.tileColoringImage(tileRows, tileColumns);
         for(const auto& tile: tiles)
-            ok &= tile.first.save(path + tile.second + ".png", "PNG");
+            ok &= tile.first.save(tiledPath + tile.second + ".png", "PNG");
+    }
+    if(makeColorMaps)
+    {
+        dir.mkdir("color maps");
+        QString mapsPath = path + "color maps/";
+        auto mapsImages = m_imageCreator.makeColorMapsImages();
+        for(const auto& img: mapsImages)
+            ok &= img.first.save(mapsPath + img.second + ".png", "PNG");
     }
     if(ok)
         message("Сохранено");

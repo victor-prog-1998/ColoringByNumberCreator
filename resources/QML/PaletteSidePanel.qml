@@ -123,5 +123,8 @@ SidePanel{
 
     ListModel{
         id: colorsModel
+        onDataChanged: {
+            console.log("Data changed")
+        }
     }
 }

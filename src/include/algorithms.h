@@ -129,6 +129,13 @@ namespace Algorithms
     void fill(int x, int y, QImage& image, const QColor& fillColor,
               QList<QPoint> *pixels = nullptr);
     /*!
+     * \brief Заливка указанных пикселей указанным цветом на изображении
+     * \param[in/out] image - изображение
+     * \param[in] pixels - набор заливаемых пикселей
+     * \param[in] color - цвет заливки
+     */
+    void fill(QImage& image, const QList<QPoint>& pixels, const QColor& color);
+    /*!
      * \brief Получение набора уникальных цветов на изображении
      * \param[in] image - изображение
      * \return набор цветов

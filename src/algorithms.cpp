@@ -791,4 +791,11 @@ QImage scaleImage3x(const QImage &image, int iterations)
 
     return srcImage;
 }
+
+void fill(QImage &image, const QList<QPoint> &pixels, const QColor &color)
+{
+    for(const auto& pix: pixels)
+        image.setPixelColor(pix, color);
+}
+
 }

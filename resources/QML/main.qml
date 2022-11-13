@@ -338,8 +338,8 @@ Window {
     Dialog{
         title: "Сохранение"
         id: saveDialog
-        width: 400
-        height: 160
+        width: 450
+        height: 180
         contentItem: Rectangle {
             anchors.fill: parent
             color: Properties.backgroundColor
@@ -408,6 +408,10 @@ Window {
                             minimum: rowsTileSpinBox.value > 1 ? 1 : 2
                         }
                     }
+                    CustomCheckBox{
+                        id: makeColorMapsCheckBox
+                        text: "Создать цветовые карты"
+                    }
                 }
                 CustomButton{
                     enabled: folderTextField.text.length > 0
@@ -419,10 +423,13 @@ Window {
                     anchors.bottom: parent.bottom
                     onClicked: {
                         let folder = folderTextField.text;
+                        let makeColorMaps = makeColorMapsCheckBox.checked;
                         if(tileCheckBox.checked)
-                            imageProcessor.saveResults(folder, rowsTileSpinBox.value, columnTileSpinBox.value);
+                            imageProcessor.saveResults(folder, makeColorMaps,
+                                                       rowsTileSpinBox.value,
+                                                       columnTileSpinBox.value);
                         else
-                            imageProcessor.saveResults(folder);
+                            imageProcessor.saveResults(folder, makeColorMaps);
                         saveDialog.close();
                     }
                 }
